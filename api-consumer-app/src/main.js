@@ -6,17 +6,6 @@ const API_URL = "https://jsonplaceholder.typicode.com/posts";
 let currentPage = 1;
 const itemsPerPage = 10;
 
-//example object
-const items = [{
-    title: "qui est esse",
-    id: 2,
-    body: "est rerum tempore vitae"
-}, {
-    title: "nesciunt quas odio",
-    id: 5,
-    body: "repudiandae veniam quearat sunt sed"
-}];
-
 //DOM elements refs
 const apiSelector = document.getElementById("fetch-method");
 const searchInput = document.getElementById("search-input");
@@ -26,7 +15,6 @@ const errorElement = document.getElementById("error");
 const resultsContainer = document.getElementById("results");
 const paginationContainer = document.getElementById("pagination");
 
-const errorMsg = "";
 const noItemsMsg = "No s'han trobat resultats";
 
 
@@ -72,11 +60,14 @@ async function fetchData() {
     try {
         if (useAxios) {
             //call axios implementation
+            await fetchDataWithAxios(searchTerm);
         } else{
             //call fetch implementation
+            await fetchDataWithFetch(searchTerm);
         }
     } catch (error) {
         //handle unexpected errors
+        showError("S'ha produït un error inesperat. Torna-ho a intentar.")
     } finally {
         hideLoading();
     }
@@ -135,8 +126,48 @@ function setupPagination(totalItems) {
 
         paginationContainer.appendChild(button);
     };
-
-
-
-
 }
+
+
+//Get data through fetch
+async function fetchDataWithFetch(searchTerm) {
+    
+    try {
+        const response = await fetch(`${API_URL}?_page=${currentPage}&_limit=${itemsPerPage}&q=${searchTerm}`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error ${response.status}`);
+        };
+        const totalItems = Number(response.headers.get("X-Total-Count"));
+        const data = await response.json();
+
+        displayResults(data, totalItems);
+
+    } catch(error){
+        showError(error.message);
+        return;
+    }
+};
+
+//Get data through axios
+async function fetchDataWithAxios(searchTerm) {
+    try {
+        const response = await axios.get(API_URL, {
+        params: {
+            _page: currentPage,
+            _limit: itemsPerPage,
+            q: searchTerm
+        }
+    });
+
+    const totalItems = Number(response.headers["x-total-count"]);
+    const data = response.data;
+
+    displayResults(data, totalItems);
+
+} catch (error) {
+        showError(error.response?.statusText || error.message);
+        return;
+    }
+};
+
