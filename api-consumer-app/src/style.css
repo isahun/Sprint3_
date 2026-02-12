@@ -46,14 +46,14 @@ body {
   padding: 1.5rem;
 }
 
-.pg-nav {
+.pagination {
   display: flex;
   gap: 0.5rem;
   margin-top: 2rem;
   justify-content: center;
 }
 
-.pg-nav button:disabled {
+.pagination button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
