@@ -1,6 +1,8 @@
 "use strict"
 
+import { default as axios } from "axios";
 import "./style.css"
+
 
 const API_URL = "https://jsonplaceholder.typicode.com/posts";
 let currentPage = 1;
@@ -160,7 +162,7 @@ async function fetchDataWithAxios(searchTerm) {
         }
     });
 
-    const totalItems = Number(response.headers["x-total-count"]);
+    const totalItems = Number(response.headers["X-Total-count"]);
     const data = response.data;
 
     displayResults(data, totalItems);
