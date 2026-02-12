@@ -7,6 +7,8 @@ import "./style.css"
 const API_URL = "https://jsonplaceholder.typicode.com/posts";
 let currentPage = 1;
 const itemsPerPage = 10;
+const cache = new Map(); //Map -->an object that can store collections of key-value pairs
+const CACHE_TTL = 5 * 60 * 1000; //5 mins
 
 //----DOM elements refs----//
 const apiSelector = document.getElementById("fetch-method");
@@ -142,6 +144,19 @@ function setupPagination(totalItems) {
 
 //Get data with fetch
 async function fetchDataWithFetch(searchTerm) {
+    const cacheKey = generateCacheKey("fetch", searchTerm, currentPage);
+    const cachedEntry = cache.get(cacheKey);
+
+    if (cachedEntry) {
+        const isExpired = Date.now() - cachedEntry.timestamp > CACHE_TTL;
+        if (!isExpired) {
+            displayResults(cachedEntry.data, cachedEntry.totalItems);
+            return;
+        } 
+        
+        cache.delete(cacheKey);
+    }
+
     if(currentController){
         currentController.abort();
     };
@@ -159,7 +174,14 @@ async function fetchDataWithFetch(searchTerm) {
         const totalItems = Number(response.headers.get("X-Total-Count"));
         const data = await response.json();
 
+        cache.set(cacheKey, {
+            data,
+            totalItems,
+            timestamp: Date.now()
+        });
+
         displayResults(data, totalItems);
+        
         currentController = null;
 
     } catch(error){
@@ -178,6 +200,22 @@ async function fetchDataWithFetch(searchTerm) {
 
 //Get data with axios
 async function fetchDataWithAxios(searchTerm) {
+    const cacheKey = generateCacheKey("axios", searchTerm, currentPage);
+    const cachedEntry = cache.get(cacheKey);
+
+    if (cachedEntry) {
+        const isExpired = Date.now() - cachedEntry.timestamp > CACHE_TTL;
+
+        if (!isExpired) {
+            displayResults(cachedEntry.data, cachedEntry.totalItems);
+            return;
+        } 
+        
+        cache.delete(cacheKey);
+        
+    }
+
+    //if no valid cache:
     if(currentController){
         currentController.abort();
     }
@@ -197,7 +235,14 @@ async function fetchDataWithAxios(searchTerm) {
     const totalItems = Number(response.headers["x-total-count"]);
     const data = response.data;
 
+    cache.set(cacheKey, {
+            data,
+            totalItems,
+            timestamp: Date.now()
+        });
+
     displayResults(data, totalItems);
+
     currentController = null;
 
 } catch (error) {
@@ -231,4 +276,8 @@ function getHTTPErrorMessage(status){
     }
 
     return `Error HTTP ${status}`
+};
+
+function generateCacheKey(method, searchTerm, page) {
+    return `${method}|${searchTerm}|${page}`;//what makes each call unique
 }
