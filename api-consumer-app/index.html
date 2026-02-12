@@ -6,8 +6,10 @@
     <meta name="author" content="Irene Sahun">
     <title>API Consumer App | Fetch vs Axios</title>
 
+
     <link href="/src/style.css" rel="stylesheet">
   </head>
+
 
   <body>
     <!-- Skip link -->
@@ -15,18 +17,20 @@
       Skip to main content
     </a>
 
+
     <div class="container">
       <header class="header">
         <h1 class="title">App de consum d'APIs</h1>
       </header>
-  
+ 
       <main id="main" class="app-main">
+
 
         <!-- Controls -->
         <section class="controls" aria-labelledby="controls-heading">
           <!-- Heading -->
           <h2 id="controls-heading" class="sr-only">Panell de control</h2>
-          
+
           <!-- Selector -->
           <label for="fetch-method" class="fetch-txt">Mètode de recuperació</label>
           <select id="fetch-method" name="fetch-method">
@@ -34,32 +38,38 @@
             <option value="axios">Utilitza Axios</option>
           </select>
 
+
           <!-- Input -->
           <label for="search-input" class="search-txt">Cerca</label>
           <input id="search-input" type="search" placeholder="Introdueix text per cercar">
+
 
           <!-- Show data -->
           <button id="fetch-btn" type="button">Mostra dades</button>
         </section>
 
+
         <!-- Loading -->
         <div id="loading" role="status" aria-live="polite" class="loading hidden">Carregant...</div>
+
 
         <!-- Error -->
         <div id="error" role="alert" class="error hidden"></div>
 
+
         <!-- Results -->
         <section id="results" class="results" aria-live="polite"></section>
 
+
         <!-- Page navigator -->
-        <nav id="pg-nav" class="pg-nav" aria-label="Navegació entre pàgines">
+        <nav id="pagination" class="pagination" aria-label="Navegació entre pàgines">
           <button id="prev-btn" class="page-btn" data-page="prev" type="button">Anterior</button>
           <div class="pages"></div>
           <button id="next-btn" class="page-btn" data-page="next" type="button">Següent</button>
         </nav>
       </main>    
     </div>
-  
+ 
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

@@ -1,3 +1,4 @@
-import './style.css'
-import axios from "axios";
+"use strict"
 
+import "./style.css"
+import axios from "axios";
