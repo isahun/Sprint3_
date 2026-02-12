@@ -19,6 +19,8 @@ const paginationContainer = document.getElementById("pagination");
 
 const noItemsMsg = "No s'han trobat resultats";
 
+let currentController = null;
+
 
 //----EVENT LISTENER----//
 fetchButton.addEventListener("click", fetchData);
@@ -137,9 +139,16 @@ function setupPagination(totalItems) {
 
 //Get data with fetch
 async function fetchDataWithFetch(searchTerm) {
-    
+    if(currentController){
+        currentController.abort();
+    };
+
+    currentController = new AbortController();
+
     try {
-        const response = await fetch(`${API_URL}?_page=${currentPage}&_limit=${itemsPerPage}&q=${searchTerm}`);
+        const response = await fetch(`${API_URL}?_page=${currentPage}&_limit=${itemsPerPage}&q=${searchTerm}`, {
+            signal: currentController.signal
+        });
         
         if (!response.ok) {
             throw new Error(getHTTPErrorMessage(response.status));
@@ -150,6 +159,10 @@ async function fetchDataWithFetch(searchTerm) {
         displayResults(data, totalItems);
 
     } catch(error){
+        if (error.name === "AbortError") {
+            return; //When cancelling, fetch delivers "abort error", which we don't need since it's a voluntary cancellation, not an error
+        }
+
         if (!navigator.onLine) {
             showError("No tens connexió a internet.")
         } else {
@@ -161,13 +174,20 @@ async function fetchDataWithFetch(searchTerm) {
 
 //Get data with axios
 async function fetchDataWithAxios(searchTerm) {
+    if(currentController){
+        currentController.abort();
+    }
+
+    currentController = new AbortController();
+
     try {
         const response = await axios.get(API_URL, {
         params: {
             _page: currentPage,
             _limit: itemsPerPage,
             q: searchTerm
-        }
+        },
+        signal: currentController.signal
     });
 
     const totalItems = Number(response.headers["x-total-count"]);
@@ -176,6 +196,10 @@ async function fetchDataWithAxios(searchTerm) {
     displayResults(data, totalItems);
 
 } catch (error) {
+        if (error.name === "CanceledError") {
+                return; //When cancelling, axios delivers "canceled error"
+            };
+
         if(!navigator.onLine){
             showError("No tens connexió a internet.")
         } else if (error.response) {
