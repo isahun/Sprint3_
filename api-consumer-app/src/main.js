@@ -3,12 +3,12 @@
 import { default as axios } from "axios";
 import "./style.css"
 
-
+//----CONFIG CONSTANTS----//
 const API_URL = "https://jsonplaceholder.typicode.com/posts";
 let currentPage = 1;
 const itemsPerPage = 10;
 
-//DOM elements refs
+//----DOM elements refs----//
 const apiSelector = document.getElementById("fetch-method");
 const searchInput = document.getElementById("search-input");
 const fetchButton = document.getElementById("fetch-btn");
@@ -20,9 +20,10 @@ const paginationContainer = document.getElementById("pagination");
 const noItemsMsg = "No s'han trobat resultats";
 
 
-//Event listener
-
+//----EVENT LISTENER----//
 fetchButton.addEventListener("click", fetchData);
+
+//----UI HELPERS----//
 
 //Show loading element
 function showLoading() {
@@ -35,8 +36,8 @@ function hideLoading() {
 }
 
 //Show error message
-function showError(errorMsg) {
-    errorElement.textContent = errorMsg;
+function showError(error) {
+    errorElement.textContent = error;
     errorElement.classList.remove("hidden");
 }
 
@@ -46,7 +47,7 @@ function hideError() {
     errorElement.classList.add("hidden");
 }
 
-//Main fetch function
+//----MAIN CONTROLLER----/
 async function fetchData() {
     const searchTerm = searchInput.value.trim();
     const useAxios = apiSelector.value === "axios";
@@ -75,7 +76,9 @@ async function fetchData() {
     }
 }
 
-//Display results & pagination
+//----RENDERING LAYER----//
+
+//Display results
 function displayResults(items, totalItems) {
     resultsContainer.innerHTML = "";
 
@@ -88,18 +91,17 @@ function displayResults(items, totalItems) {
         const card = document.createElement("div");
         card.classList.add("card");
 
-        const itemTitle = document.createElement("h3");
-        itemTitle.textContent = item.title;
-
         const itemID = document.createElement("small");
         itemID.textContent = `${item.id}`;
+
+        const itemTitle = document.createElement("h3");
+        itemTitle.textContent = item.title;
 
         const itemBody = document.createElement("p");
         itemBody.textContent = item.body;
 
-
-        card.appendChild(itemTitle);
         card.appendChild(itemID);
+        card.appendChild(itemTitle);
         card.appendChild(itemBody);
 
         resultsContainer.appendChild(card);
@@ -108,6 +110,7 @@ function displayResults(items, totalItems) {
     setupPagination(totalItems);
 }
 
+//Pagination
 function setupPagination(totalItems) {
     paginationContainer.innerHTML = "";
 
@@ -130,15 +133,16 @@ function setupPagination(totalItems) {
     };
 }
 
+//----API LAYER----//
 
-//Get data through fetch
+//Get data with fetch
 async function fetchDataWithFetch(searchTerm) {
     
     try {
         const response = await fetch(`${API_URL}?_page=${currentPage}&_limit=${itemsPerPage}&q=${searchTerm}`);
         
         if (!response.ok) {
-            throw new Error(`HTTP error ${response.status}`);
+            throw new Error(getHTTPErrorMessage(response.status));
         };
         const totalItems = Number(response.headers.get("X-Total-Count"));
         const data = await response.json();
@@ -146,12 +150,16 @@ async function fetchDataWithFetch(searchTerm) {
         displayResults(data, totalItems);
 
     } catch(error){
+        if (!navigator.onLine) {
+            showError("No tens connexió a internet.")
+        } else {
         showError(error.message);
+        }
         return;
     }
 };
 
-//Get data through axios
+//Get data with axios
 async function fetchDataWithAxios(searchTerm) {
     try {
         const response = await axios.get(API_URL, {
@@ -162,14 +170,36 @@ async function fetchDataWithAxios(searchTerm) {
         }
     });
 
-    const totalItems = Number(response.headers["X-Total-count"]);
+    const totalItems = Number(response.headers["x-total-count"]);
     const data = response.data;
 
     displayResults(data, totalItems);
 
 } catch (error) {
-        showError(error.response?.statusText || error.message);
+        if(!navigator.onLine){
+            showError("No tens connexió a internet.")
+        } else if (error.response) {
+            showError(getHTTPErrorMessage(error.response.status));
+        } else {
+            showError(error.message);
+        }
         return;
     }
 };
 
+//----UTILS----//
+
+//Get HTTP status
+function getHTTPErrorMessage(status){
+    if(status === 400) {
+        return "400 Bad Request: La sol·licitud no és vàlida."
+    }
+    if(status === 404) {
+        return "404 Not Found: El recurs sol·licitat no existeix."
+    }
+    if(status >= 500) {
+        return "Error del servidor. Torna-ho a intentar."
+    }
+
+    return `Error HTTP ${status}`
+}
