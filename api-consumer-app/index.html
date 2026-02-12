@@ -8,37 +8,41 @@
     <title>api-consumer-app</title>
   </head>
   <body>
-    <div id="app" class="main-container">
-      <header class="app-header">
-        <h1 class="app-title">API Consumer App</h1>
-
-        <section class="controls" aria-label="Controls">
-          <label for="fetch-method" class="visually-hidden">Mètode de recuperació</label>
-          <select id="fetch-method" name="fetch-method">
-            <option value="fetch">Utilitza Fetch</option>
-            <option value="axios">Utilitza Axios</option>
-          </select>
-
-          <label for="search-input" class="visually-hidden">Cerca</label>
-          <input id="search-input" type="search" placeholder="Introdueix text per cercar" />
-
-          <button id="fetch-btn" type="button">Recupera dades</button>
-        </section>
+    <div id="app" class="container">
+      <header class="header">
+        <h1 class="title">App de consum d'APIs</h1>
       </header>
 
+      <section class="controls" aria-label="Controls and interaction">
+        <label for="fetch-method" class="fetch-txt">Mètode de recuperació</label>
+        <select id="fetch-method" name="fetch-method">
+          <option value="fetch">Utilitza Fetch</option>
+          <option value="axios">Utilitza Axios</option>
+        </select>
+
+        <label for="search-input" class="search-txt">Cerca</label>
+        <input id="search-input" type="search" placeholder="Introdueix text per cercar"/>
+
+        <button id="fetch-btn" type="button">Mostra dades</button>
+      </section>
+  
       <main class="app-main">
-        <div id="loading" role="status" aria-live="polite" class="loading" hidden>Carregant...</div>
+        <div id="loading" role="status" aria-live="polite" class="loading">Carregant...</div>
 
         <div id="error" role="alert" class="error" hidden></div>
 
         <section id="results" class="results" aria-live="polite"></section>
 
-        <nav id="pagination" class="pagination flex" aria-label="Paginació">
+        <nav id="pagination" class="pagination" aria-label="Paginació">
           <button class="page-btn" data-page="prev" type="button">Anterior</button>
           <div class="pages"></div>
           <button class="page-btn" data-page="next" type="button">Següent</button>
         </nav>
       </main>
+      
+      <a href="#main" class="sr-only">
+          Skip to main content
+      </a>
     </div>
     <script type="module" src="/src/main.js"></script>
   </body>
