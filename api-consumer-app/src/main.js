@@ -16,12 +16,35 @@ const errorElement = document.getElementById("error");
 const resultsContainer = document.getElementById("results");
 const paginationContainer = document.getElementById("pagination");
 
+const errorMsg = ""
+
 
 //Event listener
 
 fetchButton.addEventListener("click", () => {
     fetchData();
-})
+});
+
+//Show loading element
+function showLoading() {
+    loadingElement.classList.remove("hidden");
+}
+
+//Hide loading element
+function hideLoading() {
+    loadingElement.classList.add("hidden");
+}
+
+//Show error message
+function showError(errorMsg) {
+    errorElement.classList.remove("hidden");
+    errorElement.textContent = errorMsg;
+}
+
+//Hide error message
+function hideError() {
+    errorElement.classList.add("hidden");
+}
 
 //Main fetch function
 async function fetchData() {
@@ -29,8 +52,8 @@ async function fetchData() {
     const useAxios = apiSelector.value === "axios";
 
     //UI state (to implement)
-    //showLoading();
-    //hideError();
+    showLoading();
+    hideError();
 
     //Clear previous content
     resultsContainer.innerText = "";
@@ -45,6 +68,6 @@ async function fetchData() {
     } catch (error) {
         //handle unexpected errors
     } finally {
-        //hideLoading();
+        hideLoading();
     }
 }
