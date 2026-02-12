@@ -17,3 +17,34 @@ const resultsContainer = document.getElementById("results");
 const paginationContainer = document.getElementById("pagination");
 
 
+//Event listener
+
+fetchButton.addEventListener("click", () => {
+    fetchData();
+})
+
+//Main fetch function
+async function fetchData() {
+    const searchTerm = searchInput.value.trim();
+    const useAxios = apiSelector.value === "axios";
+
+    //UI state (to implement)
+    //showLoading();
+    //hideError();
+
+    //Clear previous content
+    resultsContainer.innerText = "";
+    paginationContainer.innerText = "";
+
+    try {
+        if (useAxios) {
+            //call axios implementation
+        } else{
+            //call fetch implementation
+        }
+    } catch (error) {
+        //handle unexpected errors
+    } finally {
+        //hideLoading();
+    }
+}
