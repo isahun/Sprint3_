@@ -23,7 +23,10 @@ let currentController = null;
 
 
 //----EVENT LISTENER----//
-fetchButton.addEventListener("click", fetchData);
+fetchButton.addEventListener("click", () => {
+    currentPage = 1; //back to page one when user makes new petition
+    fetchData();
+});
 
 //----UI HELPERS----//
 
@@ -157,6 +160,7 @@ async function fetchDataWithFetch(searchTerm) {
         const data = await response.json();
 
         displayResults(data, totalItems);
+        currentController = null;
 
     } catch(error){
         if (error.name === "AbortError") {
@@ -194,6 +198,7 @@ async function fetchDataWithAxios(searchTerm) {
     const data = response.data;
 
     displayResults(data, totalItems);
+    currentController = null;
 
 } catch (error) {
         if (error.name === "CanceledError") {
