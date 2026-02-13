@@ -47,7 +47,7 @@ body {
 }
 
 .pagination {
-  display: flex;
+  display: none;
   gap: 0.5rem;
   margin-top: 2rem;
   justify-content: center;
