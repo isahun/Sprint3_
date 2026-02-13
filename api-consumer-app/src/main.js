@@ -33,7 +33,7 @@ fetchButton.addEventListener("click", () => {
 });
 
 apiTypeSelector.addEventListener("change", () => {
-  currentPage = 1;
+    currentPage = 1;
 });
 
 //----UI HELPERS----//
@@ -129,21 +129,18 @@ function setupPagination(totalItems) {
 
     const totalPages = Math.ceil(totalItems / itemsPerPage);
 
-    if(totalPages === 0) return;
+    if (totalPages <= 1) {
+        paginationContainer.style.display = "none";
+        return;
+    }
 
-    for(let i = 1; i <= totalPages; i++) {
-        const button = document.createElement("button");
-        button.textContent = `${i}`;
-        if (i === currentPage) {
-            button.disabled = true;
-        }
-        button.addEventListener("click", () => {
-            currentPage = i;
-            fetchData();
-        });
+    paginationContainer.style.display = "flex";
 
-        paginationContainer.appendChild(button);
-    };
+    const { startPage, endPage } = calcStartEndPage(currentPage, totalPages);
+
+    renderPrevBtn();
+    renderNumBtn(startPage, endPage)
+    renderNextBtn(totalPages);
 }
 
 //----API LAYER----//
@@ -345,3 +342,72 @@ function renderComment (card, item) {
     card.appendChild(itemBody);
     card.appendChild(postId);
 };
+
+//Pagination Util: Calc start page and end page to create btns
+function calcStartEndPage(currentPage, totalPages) {
+    const maxVisible = 5;
+    const half = Math.floor(maxVisible / 2); //2 pages at each side of the current
+
+    let startPage = currentPage - half;
+    let endPage = currentPage + half;
+
+    if (startPage < 1) {
+        startPage = 1;
+        endPage = Math.min(totalPages, maxVisible);
+    }
+
+    if (endPage > totalPages) {
+        endPage = totalPages;
+        startPage = Math.max(1, totalPages - maxVisible + 1);
+    }
+
+    return {startPage, endPage}
+}
+
+function renderPrevBtn() {
+    if(currentPage <= 1) return;
+
+    const prevBtn = document.createElement("button");
+    prevBtn.textContent = "Anterior";
+
+    prevBtn.addEventListener("click", () => {
+        currentPage--;
+        fetchData();
+    });
+
+    paginationContainer.appendChild(prevBtn)
+};
+
+function renderNumBtn(startPage, endPage) {
+    for(let i = startPage; i <= endPage; i++) {
+    
+        const button = document.createElement("button");
+        button.textContent = `${i}`;
+
+        if (i === currentPage) {
+            button.disabled = true;
+        }
+
+        button.addEventListener("click", () => {
+            currentPage = i;
+            fetchData();
+        });
+
+        paginationContainer.appendChild(button);
+    };
+}
+
+function renderNextBtn(totalPages) {
+    if(currentPage >= totalPages) return;
+
+
+    const nextBtn = document.createElement("button");
+    nextBtn.textContent = "Següent";
+    
+    nextBtn.addEventListener("click", () => {
+        currentPage++;
+        fetchData();
+    });
+
+    paginationContainer.appendChild(nextBtn);
+}
