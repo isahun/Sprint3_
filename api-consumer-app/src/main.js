@@ -4,9 +4,10 @@ import { default as axios } from "axios";
 import "./style.css"
 
 //----CONFIG CONSTANTS----//
-const API_URL = "https://jsonplaceholder.typicode.com/posts";
+const BASE_URL = "https://jsonplaceholder.typicode.com" //For bonus task: remove "/posts" at the end to leave baseURL & access other JSONPlaceholder APIs
 let currentPage = 1;
 const itemsPerPage = 10;
+
 const cache = new Map(); //Map -->an object that can store collections of key-value pairs
 const CACHE_TTL = 5 * 60 * 1000; //5 mins
 
@@ -18,6 +19,7 @@ const loadingElement = document.getElementById("loading");
 const errorElement = document.getElementById("error");
 const resultsContainer = document.getElementById("results");
 const paginationContainer = document.getElementById("pagination");
+const apiTypeSelector = document.getElementById("api-type");
 
 const noItemsMsg = "No s'han trobat resultats";
 
@@ -28,6 +30,10 @@ let currentController = null;
 fetchButton.addEventListener("click", () => {
     currentPage = 1; //back to page one when user makes new petition
     fetchData();
+});
+
+apiTypeSelector.addEventListener("change", () => {
+  currentPage = 1;
 });
 
 //----UI HELPERS----//
@@ -59,6 +65,10 @@ async function fetchData() {
     const searchTerm = searchInput.value.trim();
     const useAxios = apiSelector.value === "axios";
 
+    let selectedType = apiTypeSelector.value;
+
+    const endpointURL = `${BASE_URL}/${selectedType}`;
+
     //UI state (to implement)
     showLoading();
     hideError();
@@ -70,10 +80,10 @@ async function fetchData() {
     try {
         if (useAxios) {
             //call axios implementation
-            await fetchDataWithAxios(searchTerm);
+            await fetchDataWithAxios(endpointURL, searchTerm, selectedType);
         } else{
             //call fetch implementation
-            await fetchDataWithFetch(searchTerm);
+            await fetchDataWithFetch(endpointURL, searchTerm, selectedType);
         }
     } catch (error) {
         //handle unexpected errors
@@ -86,7 +96,7 @@ async function fetchData() {
 //----RENDERING LAYER----//
 
 //Display results
-function displayResults(items, totalItems) {
+function displayResults(items, totalItems, selectedType) {
     resultsContainer.innerHTML = "";
 
     if (items.length === 0) {
@@ -98,20 +108,16 @@ function displayResults(items, totalItems) {
         const card = document.createElement("div");
         card.classList.add("card");
 
-        const itemID = document.createElement("small");
-        itemID.textContent = `${item.id}`;
-
-        const itemTitle = document.createElement("h3");
-        itemTitle.textContent = item.title;
-
-        const itemBody = document.createElement("p");
-        itemBody.textContent = item.body;
-
-        card.appendChild(itemID);
-        card.appendChild(itemTitle);
-        card.appendChild(itemBody);
+        if(selectedType === "posts") {
+            renderPost(card, item);
+        } else if (selectedType === "users") {
+            renderUser(card, item);
+        } else if (selectedType === "comments") {
+            renderComment(card, item);
+        }
 
         resultsContainer.appendChild(card);
+        
     });
 
     setupPagination(totalItems);
@@ -143,8 +149,8 @@ function setupPagination(totalItems) {
 //----API LAYER----//
 
 //Get data with fetch
-async function fetchDataWithFetch(searchTerm) {
-    const cacheKey = generateCacheKey("fetch", searchTerm, currentPage);
+async function fetchDataWithFetch(endpointURL, searchTerm, selectedType) {
+    const cacheKey = generateCacheKey("fetch", endpointURL, searchTerm, currentPage);
     const cachedEntry = cache.get(cacheKey);
 
     if (cachedEntry) {
@@ -164,7 +170,7 @@ async function fetchDataWithFetch(searchTerm) {
     currentController = new AbortController();
 
     try {
-        const response = await fetch(`${API_URL}?_page=${currentPage}&_limit=${itemsPerPage}&q=${searchTerm}`, {
+        const response = await fetch(`${endpointURL}?_page=${currentPage}&_limit=${itemsPerPage}&q=${searchTerm}`, {
             signal: currentController.signal
         });
         
@@ -180,7 +186,7 @@ async function fetchDataWithFetch(searchTerm) {
             timestamp: Date.now()
         });
 
-        displayResults(data, totalItems);
+        displayResults(data, totalItems, selectedType);
         
         currentController = null;
 
@@ -199,11 +205,11 @@ async function fetchDataWithFetch(searchTerm) {
 };
 
 //Get data with axios
-async function fetchDataWithAxios(searchTerm) {
-    const cacheKey = generateCacheKey("axios", searchTerm, currentPage);
+async function fetchDataWithAxios(endpointURL, searchTerm, selectedType) {
+    const cacheKey = generateCacheKey("axios", endpointURL, searchTerm, currentPage);
     const cachedEntry = cache.get(cacheKey);
 
-    if (cachedEntry) {
+    if (cachedEntry) { // check if a cached response exists for this request
         const isExpired = Date.now() - cachedEntry.timestamp > CACHE_TTL;
 
         if (!isExpired) {
@@ -212,10 +218,9 @@ async function fetchDataWithAxios(searchTerm) {
         } 
         
         cache.delete(cacheKey);
-        
     }
-
-    //if no valid cache:
+    //No valid cache hit → proceed with network request
+    
     if(currentController){
         currentController.abort();
     }
@@ -223,7 +228,7 @@ async function fetchDataWithAxios(searchTerm) {
     currentController = new AbortController();
 
     try {
-        const response = await axios.get(API_URL, {
+        const response = await axios.get(endpointURL, {
         params: {
             _page: currentPage,
             _limit: itemsPerPage,
@@ -241,7 +246,7 @@ async function fetchDataWithAxios(searchTerm) {
             timestamp: Date.now()
         });
 
-    displayResults(data, totalItems);
+    displayResults(data, totalItems, selectedType);
 
     currentController = null;
 
@@ -278,6 +283,65 @@ function getHTTPErrorMessage(status){
     return `Error HTTP ${status}`
 };
 
-function generateCacheKey(method, searchTerm, page) {
-    return `${method}|${searchTerm}|${page}`;//what makes each call unique
-}
+//Generate Cache Key
+function generateCacheKey(method, url, searchTerm, page) {
+    return `${method}|${url}|${searchTerm}|${page}`;//what makes each call unique
+};
+
+//Render posts, users and comments
+function renderPost(card, item) {
+    const itemID = document.createElement("small");
+    itemID.textContent = `ID del post: ${item.id}`;
+
+    const itemTitle = document.createElement("h3");
+    itemTitle.textContent = item.title;
+
+    const itemBody = document.createElement("p");
+    itemBody.textContent = item.body;
+
+    card.appendChild(itemID);
+    card.appendChild(itemTitle);
+    card.appendChild(itemBody);
+    };
+
+function renderUser (card, item) {
+    const itemID = document.createElement("small");
+    itemID.textContent = `ID de l'usuari: ${item.id}`;
+
+    const itemName = document.createElement("h3");
+    itemName.textContent = item.name;
+
+    const email = document.createElement("p");
+    email.textContent = item.email;
+
+    const companyName = document.createElement("p");
+    companyName.textContent = `Empresa: ${item.company.name}`;
+
+    card.appendChild(itemID);
+    card.appendChild(itemName);
+    card.appendChild(email);
+    card.appendChild(companyName);
+};
+
+function renderComment (card, item) {
+    const itemID = document.createElement("small");
+    itemID.textContent = `ID: ${item.id}`;
+
+    const itemName = document.createElement("h3");
+    itemName.textContent = item.name;
+
+    const email = document.createElement("small");
+    email.textContent = `Email de l'autor: ${item.email}`;
+
+    const itemBody = document.createElement("p");
+    itemBody.textContent = item.body;
+
+    const postId = document.createElement("small");
+    postId.textContent = `ID del post relacionat: ${item.postId}`;
+
+    card.appendChild(itemID);
+    card.appendChild(itemName);
+    card.appendChild(email);
+    card.appendChild(itemBody);
+    card.appendChild(postId);
+};
