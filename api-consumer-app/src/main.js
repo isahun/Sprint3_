@@ -153,7 +153,7 @@ async function fetchDataWithFetch(endpointURL, searchTerm, selectedType) {
     if (cachedEntry) {
         const isExpired = Date.now() - cachedEntry.timestamp > CACHE_TTL;
         if (!isExpired) {
-            displayResults(cachedEntry.data, cachedEntry.totalItems);
+            displayResults(cachedEntry.data, cachedEntry.totalItems, cachedEntry.selectedType);
             return;
         } 
         
@@ -180,6 +180,7 @@ async function fetchDataWithFetch(endpointURL, searchTerm, selectedType) {
         cache.set(cacheKey, {
             data,
             totalItems,
+            selectedType,
             timestamp: Date.now()
         });
 
@@ -210,7 +211,7 @@ async function fetchDataWithAxios(endpointURL, searchTerm, selectedType) {
         const isExpired = Date.now() - cachedEntry.timestamp > CACHE_TTL;
 
         if (!isExpired) {
-            displayResults(cachedEntry.data, cachedEntry.totalItems);
+            displayResults(cachedEntry.data, cachedEntry.totalItems, cachedEntry.selectedType);
             return;
         } 
         
@@ -240,6 +241,7 @@ async function fetchDataWithAxios(endpointURL, searchTerm, selectedType) {
     cache.set(cacheKey, {
             data,
             totalItems,
+            selectedType,
             timestamp: Date.now()
         });
 
