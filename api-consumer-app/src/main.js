@@ -297,6 +297,33 @@ async function fetchDataWithAxios(endpointURL, searchTerm, selectedType) {
     }
 };
 
+async function axiosWithRetry(url, config, retries = 3, baseDelay = 500) {
+    for (let attempt= 0; attempt <= retries; attempt++) {
+        try {
+            return await axios.get(url, config);
+
+        } catch(error) {
+            //No retry if manual abort
+            if(error.name === "CanceledError") {
+                throw error;
+            }
+
+            //no retry, 404 errs already handled
+            if (error.message?.startsWith("400") || error.message?.startsWith("404")){ 
+                throw error;
+            }
+
+            //if last attempt --> throw error
+            if(attempt === retries) {
+                throw error;
+            }
+
+            const delay = baseDelay * 2 ** attempt;
+            await sleep(delay);
+        }
+    }
+}
+
 //----UTILS----//
 
 //Get HTTP status
