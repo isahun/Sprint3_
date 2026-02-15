@@ -413,3 +413,9 @@ function renderNextBtn(totalPages) {
 
     paginationContainer.appendChild(nextBtn);
 }
+
+//Retry helper
+function sleep (ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
