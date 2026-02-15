@@ -170,9 +170,10 @@ async function fetchWithRetry(url, options, retries = 3, baseDelay = 500) {
             if(attempt === retries) {
                 throw error;
             }
-
+            //exponential backoff
             const delay = baseDelay * 2 ** attempt;
-            await sleep(delay);
+            const finalDelay = Math.random() * delay;
+            await sleep(finalDelay);
         }
     }
 }
@@ -199,8 +200,10 @@ async function axiosWithRetry(url, config, retries = 3, baseDelay = 500) {
                 throw error;
             }
 
+            //exponential backoff
             const delay = baseDelay * 2 ** attempt;
-            await sleep(delay);
+            const finalDelay = Math.random() * delay;
+            await sleep(finalDelay);
         }
     }
 }
