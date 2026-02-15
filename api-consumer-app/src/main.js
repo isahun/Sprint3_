@@ -186,25 +186,21 @@ async function axiosWithRetry(url, config, retries = 3, baseDelay = 500) {
 
         } catch(error) {
             //No retry if manual abort
-            if(error.name === "CanceledError") {
-                throw error;
-            }
-
+            if(error.name === "CanceledError") throw error;
+            
             //no retry, 404 errs already handled
             const status = error.response?.status;
-            
-            if (error.message?.startsWith("400") || error.message?.startsWith("404")){ 
-                throw error;
-            }
+
+            //check both if status exists & < 500
+            if (status && status < 500) throw error;
 
             //if last attempt --> throw error
-            if(attempt === retries) {
-                throw error;
-            }
+            if(attempt === retries) throw error;
 
             //exponential backoff
             const delay = baseDelay * 2 ** attempt;
             const finalDelay = Math.random() * delay;
+            
             await sleep(finalDelay);
         }
     }
