@@ -191,6 +191,8 @@ async function axiosWithRetry(url, config, retries = 3, baseDelay = 500) {
             }
 
             //no retry, 404 errs already handled
+            const status = error.response?.status;
+            
             if (error.message?.startsWith("400") || error.message?.startsWith("404")){ 
                 throw error;
             }
@@ -234,9 +236,6 @@ async function fetchDataWithFetch(endpointURL, searchTerm, selectedType) {
             signal: currentController.signal
         });
         
-        if (!response.ok) {
-            throw new Error(getHTTPErrorMessage(response.status));
-        };
         const totalItems = Number(response.headers.get("X-Total-Count"));
         const data = await response.json();
 
