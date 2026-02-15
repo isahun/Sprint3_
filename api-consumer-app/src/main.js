@@ -227,7 +227,7 @@ async function fetchDataWithFetch(endpointURL, searchTerm, selectedType) {
     currentController = new AbortController();
 
     try {
-        const response = await fetch(`${endpointURL}?_page=${currentPage}&_limit=${itemsPerPage}&q=${searchTerm}`, {
+        const response = await fetchWithRetry(`${endpointURL}?_page=${currentPage}&_limit=${itemsPerPage}&q=${searchTerm}`, {
             signal: currentController.signal
         });
         
@@ -286,7 +286,7 @@ async function fetchDataWithAxios(endpointURL, searchTerm, selectedType) {
     currentController = new AbortController();
 
     try {
-        const response = await axios.get(endpointURL, {
+        const response = await axiosWithRetry(endpointURL, {
         params: {
             _page: currentPage,
             _limit: itemsPerPage,
