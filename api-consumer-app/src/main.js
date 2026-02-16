@@ -490,4 +490,3 @@ function renderNextBtn(totalPages) {
 function sleep (ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
-
