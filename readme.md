@@ -1,243 +1,280 @@
 # 📡 API Consumer App  
 _API Data Consumption with Fetch and Axios_
 
-This project is an academic exercise focused on consuming data from an external API using both **Fetch API** and **Axios**.
+This project is an academic front-end exercise focused on consuming data from an external API using both **Fetch API** and **Axios**, while implementing robust UI state management and client-side architecture patterns.
 
-The goal is to build a small web application that retrieves, displays, filters, and paginates data while managing different UI states such as loading and error handling.
+The application retrieves, filters, paginates, caches, and renders data dynamically from multiple API endpoints, handling network errors, cancellation, and retry logic.
 
 ---
 
 ## 🎯 Learning Objectives
 
-By developing this project, the following skills are intended to be practiced:
+This project practices and consolidates:
 
-- Setting up a basic web project (HTML, CSS, JavaScript)
+- Structuring a small front-end application (HTML, CSS, JavaScript)
 - Performing HTTP requests using **Fetch API**
 - Performing HTTP requests using **Axios**
-- Managing UI states (loading, results, errors)
+- Managing UI states (loading, empty results, errors)
 - Implementing search functionality
-- Implementing pagination logic
-- Observing structural differences between Fetch and Axios
+- Implementing dynamic pagination
+- Handling HTTP and network errors
+- Cancelling in-flight requests using `AbortController`
+- Implementing in-memory caching with expiration (TTL)
+- Supporting multiple API endpoints dynamically
+- Implementing retry logic with exponential backoff
 
 ---
 
 ## 🌐 API
 
-The application will use the public testing API:
+The application uses:
 
-**JSONPlaceholder – Posts Endpoint**
+**JSONPlaceholder**
 
-https://jsonplaceholder.typicode.com/posts
+https://jsonplaceholder.typicode.com
+
+Supported endpoints:
+
+- `/posts`
+- `/users`
+- `/comments`
 
 Supported query parameters:
 
-- `_page` → Page number
-- `_limit` → Number of items per page
-- `q` → Search term
-- `X-Total-Count` → Total number of items (returned in response headers)
+- `_page` → Page number  
+- `_limit` → Number of items per page  
+- `q` → Search term  
+
+Pagination metadata is extracted from:
+
+X-Total-Count (response header)
+
 
 ---
 
 ## 📂 Project Structure
 
-```
 api-consumer-app/
 │
 ├── index.html
-├── styles.css
+├── style.css
 └── main.js
-```
+
 
 ---
 
-## 🧱 Planned Application Structure
+## 🧠 Architecture Overview
 
-### HTML (index.html)
+The application is structured in logical layers:
 
-The structure will include:
+### 1️⃣ UI Layer
 
-- Main container wrapping the entire application
-- Header with:
-  - Main title
-  - Controls section containing:
-    - API selector (Fetch / Axios)
-    - Search input
-    - "Get Data" button
-- Main content section containing:
-  - Loading indicator
-  - Error message container
-  - Results container
-  - Pagination container
+Handles:
+- Loading state
+- Error state
+- Rendering results
+- Rendering pagination controls
 
----
-
-### CSS (styles.css)
-
-Planned styling includes:
-
-- Global body styling (typography, spacing, layout width)
-- `.container` layout wrapper
-- Flexbox alignment for controls
-- `.hidden` utility class
-- Loading and error styling
-- Results grid using:
-
-```css
-grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-```
-
-- Card styling:
-  - Border
-  - Shadow
-  - Padding
-  - Hover effect
-- Pagination button styling including `:disabled` state
-
----
-
-## 🧠 Application Logic (main.js)
-
-### Core Constants & State
-
-```js
-const API_URL = 'https://jsonplaceholder.typicode.com/posts';
-let currentPage = 1;
-const itemsPerPage = 10;
-```
-
-DOM references will be obtained for:
-
-- API selector
-- Search input
-- Fetch button
-- Loading element
-- Error element
-- Results container
-- Pagination container
-
----
-
-### Planned Features
-
-#### 1️⃣ Technology Selector
-
-Users will be able to choose between:
-
-- Fetch
-- Axios
-
-The selected option will determine which request method is executed.
-
----
-
-#### 2️⃣ Search Functionality
-
-The search input will filter posts using the `q` query parameter.
-
----
-
-#### 3️⃣ Pagination
-
-- 10 items per page
-- Total pages calculated using:
-
-```js
-Math.ceil(totalItems / itemsPerPage)
-```
-
-- Active page button will be disabled
-
----
-
-#### 4️⃣ UI State Management
-
-Planned state handling functions:
-
+Functions:
 - `showLoading()`
 - `hideLoading()`
-- `showError(message)`
+- `showError()`
 - `hideError()`
-- `displayResults(items, totalItems)`
-- `setupPagination(totalItems)`
+- `displayResults()`
+- `setupPagination()`
 
 ---
 
-## 🔹 Fetch Implementation (Planned)
+### 2️⃣ Controller Layer
 
-- Perform GET request using `fetch()`
-- Manually validate HTTP status using `response.ok`
-- Parse JSON using `.json()`
-- Extract total items from:
+Responsible for:
 
-```js
-response.headers.get('X-Total-Count')
-```
+- Reading user input
+- Selecting request method (Fetch / Axios)
+- Selecting API endpoint
+- Resetting page state
+- Triggering data fetch
 
-- Handle errors manually
+Main function:
+fetchData()
 
----
-
-## 🔹 Axios Implementation (Planned)
-
-- Perform GET request using `axios.get()`
-- Pass query parameters using `params` object
-- Access headers via:
-
-```js
-response.headers['x-total-count']
-```
-
-- Handle errors using `try...catch`
 
 ---
 
-## ⚖️ Fetch vs Axios (Exploration Goal)
+### 3️⃣ API Layer
 
-This project aims to observe practical differences between:
+Two interchangeable implementations:
 
-- Native Fetch API
-- Axios library abstraction
+- `fetchDataWithFetch()`
+- `fetchDataWithAxios()`
 
-The comparison will focus on:
+Both:
+- Build dynamic endpoint URLs
+- Apply pagination and search parameters
+- Handle cancellation
+- Handle HTTP errors
+- Store results in cache
+- Forward data to rendering layer
+
+---
+
+## ✅ Implemented Features
+
+---
+
+### 🔹 Fetch / Axios Selector
+
+Users can dynamically choose the request method.
+
+This allows direct comparison of:
 
 - Error handling behavior
 - Header access
 - Query parameter handling
-- JSON parsing
-- Code readability and structure
+- Response parsing
 
 ---
 
-## 🚀 Optional Extensions
+### 🔹 Multi-Endpoint Support
 
-Potential additional improvements:
+Users can switch between:
 
-- Advanced HTTP error messages
-- Basic caching mechanism
-- Request cancellation (AbortController)
-- Support for custom API URLs
-- Retry logic with exponential backoff
+- Posts
+- Users
+- Comments
+
+Each endpoint has a dedicated renderer:
+
+- `renderPost()`
+- `renderUser()`
+- `renderComment()`
+
+Rendering is decoupled from request logic.
+
+---
+
+### 🔹 Search
+
+Implemented using the `q` query parameter.
+
+Works across all supported endpoints.
+
+---
+
+### 🔹 Pagination
+
+- Configurable `itemsPerPage`
+- Total pages calculated via:
+Math.ceil(totalItems / itemsPerPage)
+
+- Displays:
+- Previous button
+- Numeric buttons (limited window of 5)
+- Next button
+- Pagination hidden when unnecessary
+
+---
+
+### 🔹 UI State Management
+
+Explicit handling of:
+
+- Loading indicator
+- Empty results message
+- Network errors
+- HTTP status errors
+- Request cancellation
+
+---
+
+### 🔹 Request Cancellation
+
+Implemented using:
+
+AbortController
+
+Behavior:
+- Ongoing request is cancelled when a new request is triggered
+- Prevents race conditions
+- Avoids outdated UI rendering
+
+---
+
+### 🔹 In-Memory Cache System
+
+Implemented using:
+
+Map()
+
+Cache key includes:
+
+- Request method
+- Endpoint
+- Search term
+- Page number
+
+Features:
+- Time-based expiration (TTL)
+- Prevents redundant network calls
+- Automatically invalidates expired entries
+
+---
+
+### 🔹 Retry System (Exponential Backoff)
+
+Implements retry logic for failed network requests.
+
+Features:
+
+- Exponential delay
+- Optional jitter to reduce collision risk
+- Configurable retry attempts
+- Only retries network failures (not HTTP errors)
+
+Improves resilience in unstable network environments.
+
+---
+
+## ⚖️ Fetch vs Axios – Observations
+
+The project highlights practical differences:
+
+| Feature | Fetch | Axios |
+|----------|--------|--------|
+| HTTP error handling | Manual (`response.ok`) | Automatic (throws error) |
+| Header access | `response.headers.get()` | `response.headers[]` |
+| JSON parsing | Manual (`.json()`) | Automatic |
+| Query parameters | Manual string build | `params` object |
+| Cancellation | `AbortController` | `AbortController` |
 
 ---
 
 ## 🛠️ Development Tools
 
-Recommended tools during development:
-
-- Browser DevTools (Network tab)
-- Browser Console
-- MDN documentation for Fetch
-- Axios official documentation
+- Browser DevTools (Network tab & Console)
+- MDN Web Docs
+- Axios Documentation
 
 ---
 
-## 📌 Project Status
+## 📌 Current Status
 
-Repository initialized.  
-Implementation in progress.
+Core features implemented.
+
+Includes:
+
+- Multi-endpoint support
+- Pagination
+- Search
+- Cache system
+- Cancellation
+- Retry with exponential backoff
+- Advanced error handling
+
+Project complete and fully functional.
 
 ---
 
 ## 👩‍💻 Author
 
-Academic practice project focused on API consumption using JavaScript.
+Academic front-end practice project focused on robust API consumption patterns and clean client-side architecture in JavaScript.
