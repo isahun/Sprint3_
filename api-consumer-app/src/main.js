@@ -41,11 +41,13 @@ apiTypeSelector.addEventListener("change", () => {
 //Show loading element
 function showLoading() {
     loadingElement.classList.remove("hidden");
+    resultsContainer.setAttribute("aria-busy", "true"); //let user know it's working
 }
 
 //Hide loading element
 function hideLoading() {
     loadingElement.classList.add("hidden");
+    resultsContainer.setAttribute("aria-busy", "false"); //finished working
 }
 
 //Show error message
@@ -442,6 +444,7 @@ function renderPrevBtn() {
     const prevBtn = document.createElement("button");
     prevBtn.classList.add("pagination-btn");
     prevBtn.textContent = "Anterior";
+    prevBtn.ariaLabel = "Anar a la pàgina anterior"
 
     prevBtn.addEventListener("click", () => {
         currentPage--;
@@ -457,6 +460,7 @@ function renderNumBtn(startPage, endPage) {
         const button = document.createElement("button");
         button.classList.add("pagination-active");
         button.textContent = `${i}`;
+        button.ariaLabel = `Pàgina ${i}`
 
         if (i === currentPage) {
             button.disabled = true;
@@ -477,6 +481,8 @@ function renderNextBtn(totalPages) {
     const nextBtn = document.createElement("button");
     nextBtn.classList.add("pagination-btn");
     nextBtn.textContent = "Següent";
+    nextBtn.ariaLabel = "Anar a la pàgina següent";
+
     
     nextBtn.addEventListener("click", () => {
         currentPage++;
