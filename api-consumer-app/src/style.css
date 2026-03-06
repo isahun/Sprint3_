@@ -1,199 +1,326 @@
-/*  Reset  */
+/* ==========================================================================
+   1. RESET & VARIABLES (Design System)
+   ========================================================================== */
 
-* { /* el selector de tot */
+* {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
 }
-/* --------Global styles-------- */
 
 :root {
-  font-family: system-ui, -apple-system, sans-serif;
-  background-color: #7BABED;
-  color: #091F3F;
+    /* Paleta de Colors */
+    --primary-color: #7BABED;
+    --primary-gradient: linear-gradient(135deg, #7BABED 0%, #5C9CE6 100%);
+    --secondary-color: #ac7ded;
+    --secondary-dark: #9356e8;
+    --secondary-light: #ac7ded33; /* Amb transparència per al focus */
+    --accent-color: #EB609C;
+    --accent-light: #FCE8F1;
+    --accent-hover: #EC609C;
+    
+    --text-main: #091F3F;
+    --text-muted: #1e293b;
+    --white: #ffffff;
+    --white-translucent: rgba(255, 255, 255, 0.85);
+    --error-color: #AB1915;
+    
+    --shadow-color-light: #00000033;
+    --shadow-color-dark: #0f14594d;
+
+    /* Escala d'espaiat (Modular) */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+    --space-xl: 2rem;
+    --space-xxl: 2.5rem;
+    --space-xxxl: 3rem;
+
+    /* Tipografia i Radi */
+    --fs-h1: clamp(1.8rem, 5vw, 2.5rem); /* Tipografia fluida */
+    --fs-body: 1rem;
+    --fs-small: 0.85rem;
+    --radius-md: 2rem;
+    --radius-lg: 2.5em;
 }
+
+/* Suport per a Dark Mode (Opcional, com demanava el feedback) */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --primary-color: #1a2b45;
+        --primary-gradient: linear-gradient(135deg, #1a2b45 0%, #0d1624 100%);
+        --text-main: #f8fafc;
+        --white: #1e293b;
+        --white-translucent: rgba(30, 41, 59, 0.85);
+        --accent-light: #2d1b24;
+    }
+}
+
+/* ==========================================================================
+   2. BASE & TYPOGRAPHY
+   ========================================================================== */
 
 body {
-  overflow-x: hidden;
-  line-height: 1.5;
+    font-family: system-ui, -apple-system, sans-serif;
+    background: var(--primary-gradient); /* Usant el gradient demanat */
+    color: var(--text-main);
+    line-height: 1.5;
+    overflow-x: hidden;
+    min-height: 100vh;
 }
 
-.skip-link {
-  position: absolute; 
-  top: 0px; 
-  left: 0; 
-  background: #ac7ded; 
-  color: white; 
-  padding: 8px; 
-  z-index: 100; 
-  transition: top 0.3s;
-}
-
-.skip-link:focus { 
-  top: 0; 
-}
-
-/* Container */
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
-}
-
-/* Main elements */
 h1 {
-  margin-bottom: 1.5em;
-  font-weight: 800;
-  letter-spacing: -0.025em;
-  color: #ffffff
+    font-size: var(--fs-h1);
+    margin-bottom: var(--space-lg);
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    color: var(--white);
+    text-shadow: 0 2px 4px var(--shadow-color-light); /* Filtre/Efecte visual */
 }
 
-.controls {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  padding: 2.5rem;
-  gap: 1.5rem;
-  align-items: flex-end;
-  justify-content: center;
-  margin-bottom: 3rem;
-  background: #ffffff;
-  border-radius: 2.5em;
-  box-shadow: 0 20px 25px -5px #0000004d, 0 10px 10px -5px #00000033;
-  color: #1e293b;
+/* Transicions globals per a elements interactius */
+button, input, select, a {
+    transition: all 0.3s ease;
 }
 
-.controls h2 {
-  flex-basis: 100%;
-  text-align: center;
-}
+/* ==========================================================================
+   3. LAYOUT (Estructura general)
+   ========================================================================== */
 
-.control-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  text-align: center;
-}
-
-.controls select, input {
-  border-radius: 2rem;
-  padding: 0.75rem 1.5rem;
-  border: 1px solid #ac7ded;
-  font-size: 0.95rem;
-}
-
-.controls select:focus, input:focus {
-  border-color: #ac7ded;
-  box-shadow: 0 0 0 3px #ac7ded33;
-}
-
-.controls button {
-  padding: 1rem 2rem;
-  border-radius: 2rem;
-  border: none;
-  color: #ffffff;
-  background: #ac7ded;
-  margin: 1rem 4rem;
-  box-shadow: 0px 5px 10px #0f14594d;
-
-}
-
-.controls button:hover {
-  background: #9356e8; 
-  transform: translateY(-1px);
-  cursor: pointer;
-}
-
-.fetch-txt, .search-txt, .api-txt {
-  font-size: small;
-  letter-spacing: 1.5px;
-  font-weight: 300;
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--space-xl);
+    text-align: center;
 }
 
 .results {
-  display: grid;
-  gap: 1.5rem;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  margin-bottom: 3rem;
+    display: grid;
+    gap: var(--space-lg);
+    /* CSS Grid modern per a targetes responsives */
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+    margin-bottom: var(--space-xxxl);
 }
 
+/* ==========================================================================
+   4. COMPONENTS (BEM: Block__Element--Modifier)
+   ========================================================================== */
 
-/* Cards */
+/* --- Controls Panel --- */
+.controls {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: center;
+    gap: var(--space-lg);
+    padding: var(--space-xxl);
+    margin-bottom: var(--space-xxxl);
+    
+    background: var(--white-translucent);
+    backdrop-filter: blur(10px); /* Efecte demanat al feedback */
+    border-radius: var(--radius-lg);
+    box-shadow: 0 20px 25px -5px var(--shadow-color-light);
+    color: var(--text-muted);
+}
+
+.controls h2 {
+    flex-basis: 100%;
+    text-align: center;
+}
+
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    text-align: center;
+}
+
+/* Label unificat per substituir .fetch-txt, .search-txt, etc. */
+.controls__label {
+    font-size: var(--fs-small);
+    letter-spacing: 1.5px;
+    font-weight: 300;
+    text-transform: uppercase;
+}
+
+/* --- Forms & Inputs --- */
+fieldset {
+    padding-bottom: 5px;
+    border: none;
+}
+
+input, select {
+    border-radius: var(--radius-md);
+    padding: 0.75rem var(--space-lg);
+    border: 1px solid var(--secondary-color);
+    font-size: var(--fs-body);
+    background-color: var(--white);
+    color: var(--text-main);
+}
+
+/* --- Buttons --- */
+button {
+    padding: var(--space-md) var(--space-xl);
+    border-radius: var(--radius-md);
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn--primary {
+    color: var(--white);
+    background: var(--secondary-color);
+    box-shadow: 0px 5px 10px var(--shadow-color-dark);
+    margin: var(--space-md) var(--space-xxxl);
+}
+
+.btn--primary:hover {
+    background: var(--secondary-dark);
+    transform: translateY(-2px);
+}
+
+/* --- Cards --- */
 .card {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-  border-radius: 2.5em;
-  border: 4px solid #EB609C;
-  box-shadow: 0px 5px 15px #6564644d;
-  background: #FCE8F1;
-  padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+    padding: var(--space-lg);
+    background: var(--accent-light);
+    border: 4px solid var(--accent-color);
+    border-radius: var(--radius-lg);
+    box-shadow: 0px 5px 15px var(--shadow-color-light);
+    text-align: left;
+}
+
+.card__image {
+    aspect-ratio: 16 / 9; /* Demanat al feedback: Mantenir proporcions */
+    object-fit: cover;
+    border-radius: var(--radius-md);
 }
 
 .card-ID {
-  color: #EB609C;
-  font-weight: bold;
+    color: var(--accent-color);
+    font-weight: bold;
 }
 
+/* --- Pagination --- */
 .pagination {
-  display: none;
-  gap: 0.75rem;
-  margin-top: 2rem;
-  justify-content: center;
-  align-items: center;
+    display: none;
+    gap: 0.75rem; /* calc(var(--space-sm) + var(--space-xs)) */
+    margin-top: var(--space-xl);
+    justify-content: center;
+    align-items: center;
 }
 
 .pagination button {
-  padding: 0.75rem;
-  min-width: 2.5rem;
-  border-radius: 2.5em;
-  border: none;
-  box-shadow: 0px 5px 10px #0f14594d;
-
+    padding: 0.75rem;
+    min-width: 2.5rem;
+    box-shadow: 0px 5px 10px var(--shadow-color-dark);
+    background: var(--white);
+    color: var(--text-main);
 }
 
 .pagination-active:hover:not(:disabled) {
-  background: #EC609C;
-  color: white;
-  cursor: pointer;
+    background: var(--accent-hover);
+    color: var(--white);
 }
 
 .pagination button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
 }
 
 .pagination-btn:hover {
-  background: #9e6de4;
-  color: #ffffff;
-  cursor: pointer;
+    background: var(--secondary-dark);
+    color: var(--white);
 }
 
-/* States */
+/* --- Footer --- */
+.footer-txt {
+    font-size: var(--fs-small);
+    color: var(--text-main);
+}
+
+/* ==========================================================================
+   5. STATES & UTILITIES (A11y, Focus, Hidden)
+   ========================================================================== */
+
 .hidden {
-  display: none;
+    display: none !important;
 }
 
 #loading {
-  margin-bottom: 2rem 0;
-  font-weight: 600;
-  color: #7726e8;
-  }
-
-#error {
-  color: #AB1915;
-  margin-bottom: 1rem;
+    margin-bottom: var(--space-xl);
+    font-weight: 600;
+    color: var(--secondary-dark);
+    /* Exemple d'ús de filter per a animacions o estats */
+    filter: drop-shadow(0 0 5px var(--secondary-light));
 }
 
+#error {
+    color: var(--error-color);
+    margin-bottom: var(--space-md);
+    font-weight: bold;
+}
+
+/* Accessibilitat: Skip Link */
+.skip-link {
+    position: absolute; 
+    top: -100px; 
+    left: 0; 
+    background: var(--secondary-color); 
+    color: var(--white); 
+    padding: var(--space-sm) var(--space-md); 
+    z-index: 100; 
+    transition: top 0.3s ease;
+}
+
+.skip-link:focus { 
+    top: 0; 
+}
+
+/* Focus modern unificat */
+button:focus, input:focus, select:focus, a:focus {
+    outline: none; /* Eliminem el per defecte per evitar dobles línies */
+}
+
+:focus-visible {
+    outline: 3px solid var(--accent-color);
+    outline-offset: 4px;
+    box-shadow: 0 0 0 6px rgba(235, 96, 156, 0.2);
+}
+
+/* ==========================================================================
+   6. RESPONSIVE & ACCESSIBILITY MEDIA QUERIES
+   ========================================================================== */
+
+/* Container Queries alternatiu o Media Queries estàndard */
 @media (max-width: 768px) { 
-  .controls { 
-    flex-direction: column; 
-    align-items: stretch; 
-    border-radius: 2rem; 
-  } 
-  
-  .container { 
-    padding: 1rem; 
-  } 
+    .controls { 
+        flex-direction: column; 
+        align-items: stretch; 
+        border-radius: var(--radius-md); 
+        padding: var(--space-lg);
+    } 
+    
+    .container { 
+        padding: var(--space-md); 
+    } 
+    
+    .btn--primary {
+        margin: var(--space-md) 0;
+    }
 } 
+
+/* Accessibilitat: Reducció de moviment */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
