@@ -139,7 +139,7 @@ function setupPagination(totalItems) {
     const { startPage, endPage } = calcStartEndPage(currentPage, totalPages);
 
     renderPrevBtn();
-    renderNumBtn(startPage, endPage)
+    renderNumBtn(startPage, endPage);
     renderNextBtn(totalPages);
 }
 
@@ -348,12 +348,15 @@ function generateCacheKey(method, url, searchTerm, page) {
 //Render posts, users and comments
 function renderPost(card, item) {
     const itemID = document.createElement("small");
+    itemID.classList.add("card-ID");
     itemID.textContent = `ID del post: ${item.id}`;
 
     const itemTitle = document.createElement("h3");
+    itemTitle.classList.add("card-title")
     itemTitle.textContent = item.title;
 
     const itemBody = document.createElement("p");
+    itemBody.classList.add("card-body");
     itemBody.textContent = item.body;
 
     card.appendChild(itemID);
@@ -363,15 +366,19 @@ function renderPost(card, item) {
 
 function renderUser (card, item) {
     const itemID = document.createElement("small");
+    itemID.classList.add("card-ID");
     itemID.textContent = `ID de l'usuari: ${item.id}`;
 
     const itemName = document.createElement("h3");
+    itemName.classList.add("card-title")
     itemName.textContent = item.name;
 
     const email = document.createElement("p");
+    itemName.classList.add("card-email");
     email.textContent = item.email;
 
     const companyName = document.createElement("p");
+    companyName.classList.add("card-company")
     companyName.textContent = `Empresa: ${item.company.name}`;
 
     card.appendChild(itemID);
@@ -382,18 +389,23 @@ function renderUser (card, item) {
 
 function renderComment (card, item) {
     const itemID = document.createElement("small");
+    itemID.classList.add("card-ID");
     itemID.textContent = `ID: ${item.id}`;
 
     const itemName = document.createElement("h3");
+    itemName.classList.add("card-title")
     itemName.textContent = item.name;
 
     const email = document.createElement("small");
+    itemName.classList.add("card-email");
     email.textContent = `Email de l'autor: ${item.email}`;
 
     const itemBody = document.createElement("p");
+    itemBody.classList.add("card-body");
     itemBody.textContent = item.body;
 
     const postId = document.createElement("small");
+    postId.classList.add("card-ID");
     postId.textContent = `ID del post relacionat: ${item.postId}`;
 
     card.appendChild(itemID);
@@ -428,6 +440,7 @@ function renderPrevBtn() {
     if(currentPage <= 1) return;
 
     const prevBtn = document.createElement("button");
+    prevBtn.classList.add("pagination-btn");
     prevBtn.textContent = "Anterior";
 
     prevBtn.addEventListener("click", () => {
@@ -435,13 +448,14 @@ function renderPrevBtn() {
         fetchData();
     });
 
-    paginationContainer.appendChild(prevBtn)
+    paginationContainer.appendChild(prevBtn);
 };
 
 function renderNumBtn(startPage, endPage) {
     for(let i = startPage; i <= endPage; i++) {
     
         const button = document.createElement("button");
+        button.classList.add("pagination-active");
         button.textContent = `${i}`;
 
         if (i === currentPage) {
@@ -460,8 +474,8 @@ function renderNumBtn(startPage, endPage) {
 function renderNextBtn(totalPages) {
     if(currentPage >= totalPages) return;
 
-
     const nextBtn = document.createElement("button");
+    nextBtn.classList.add("pagination-btn");
     nextBtn.textContent = "Següent";
     
     nextBtn.addEventListener("click", () => {
@@ -476,4 +490,3 @@ function renderNextBtn(totalPages) {
 function sleep (ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
-
