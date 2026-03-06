@@ -15,7 +15,7 @@
       Skip to main content
     </a>
 
-    <div class="container">
+    <article class="container">
       <header class="header">
         <h1 class="title">App de consum d'APIs</h1>
       </header>
@@ -23,6 +23,7 @@
       <main id="main" class="app-main">
 
         <!-- Controls -->
+      <form>
         <section class="controls" aria-labelledby="controls-heading">
           <!-- Heading -->
           <h2 id="controls-heading" class="sr-only">Panell de control</h2>
@@ -31,8 +32,8 @@
           <div class="control-group">
             <label for="fetch-method" class="fetch-txt">MÈTODE DE RECUPERACIÓ DE DADES</label>
             <select id="fetch-method" name="fetch-method">
-              <option value="fetch">Utilitza Fetch</option>
-              <option value="axios">Utilitza Axios</option>
+              <option value="fetch" aria-describedby="Tria fetch com a mètode">Utilitza Fetch</option>
+              <option value="axios" aria-describedby="Tria axios com a mètode">Utilitza Axios</option>
             </select>
           </div>
 
@@ -44,23 +45,26 @@
 
           <!--API URL Selector-->
           <div class="control-group">
-            <label for="api-type" class="api-txt">TRIA UNA API</label>
-            <select id="api-type" name="api-type">
-              <option value="posts">Posts</option>
-              <option value="users">Users</option>
-              <option value="comments">Comments</option>
-            </select>
+            <fieldset>
+            <legend for="api-type" class="api-txt">TRIA UNA API</legend>
+              <select id="api-type" name="api-type">
+                <option value="posts">Posts</option>
+                <option value="users">Users</option>
+                <option value="comments">Comments</option>
+              </select>
+            </fieldset>
           </div>
 
           <!-- Show data -->
           <button id="fetch-btn" type="button">Mostra dades</button>
         </section>
+      </form>
 
         <!-- Loading -->
         <div id="loading" role="status" aria-live="polite" class="loading hidden">Carregant...</div>
 
         <!-- Error -->
-        <div id="error" role="alert" class="error hidden"></div>
+        <div id="error" role="alert" class="error hidden" aria-describedby="Missatge d'error"></div>
 
         <!-- Results -->
         <section id="results" class="results" aria-live="polite"></section>
@@ -68,8 +72,12 @@
         <!-- Page navigator -->
         <nav id="pagination" class="pagination" aria-label="Navegació entre pàgines">          
         </nav>
-      </main>    
-    </div>
+      </main>
+
+      <footer>
+        <p class="footer-txt">Creat per Irene V. Sahun en el marc del bootcamp de Frontend de la IT Academy</p>
+      </footer>    
+    </article>
 
     <script type="module" src="/src/main.js"></script>
   </body>
