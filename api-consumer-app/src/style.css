@@ -48,12 +48,13 @@
 /* Suport per a Dark Mode (Opcional, com demanava el feedback) */
 @media (prefers-color-scheme: dark) {
     :root {
-        --primary-color: #1a2b45;
-        --primary-gradient: linear-gradient(135deg, #1a2b45 0%, #0d1624 100%);
-        --text-main: #f8fafc;
-        --white: #1e293b;
-        --white-translucent: rgba(30, 41, 59, 0.85);
-        --accent-light: #2d1b24;
+        --primary-color: #2a0f28;
+        --primary-gradient: linear-gradient(135deg, #2a0f24 0%, #1e293b 100%);
+        --text-main: #fcf8fb; /* Lletra principal clara */
+        --text-muted: #f0e2ec; /* FIX: Lletra secundària clara pels labels! */
+        --white: #050405; /* Els "blancs" passen a ser gris fosc */
+        --white-translucent: rgba(59, 30, 53, 0.85);
+        --accent-light: #2d1b24; /* El fons de les cards en rosa molt fosc */
     }
 }
 
@@ -75,7 +76,7 @@ h1 {
     margin-bottom: var(--space-lg);
     font-weight: 800;
     letter-spacing: -0.025em;
-    color: var(--white);
+    color: var(--accent-color);
     text-shadow: 0 2px 4px var(--shadow-color-light); /* Filtre/Efecte visual */
 }
 
@@ -183,8 +184,8 @@ button {
 
 /* --- Cards --- */
 .card {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    align-content: start; /* content starts at beginning even if card gets larger */
     gap: var(--space-lg);
     padding: var(--space-lg);
     background: var(--accent-light);
