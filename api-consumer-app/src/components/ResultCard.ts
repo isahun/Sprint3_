@@ -15,7 +15,7 @@ const renderStrategies: Record<string, (item: any) => string> = {
     <p class="card-company">Company: ${item.company.name}</p>
     `,
     [API_TYPES.COMMENTS]: (item: Comment) => `
-    <small class="card-ID">ID: ${item.id}</small>
+    <small class="card-ID">Comment ID: ${item.id}</small>
     <h3 class="card-title">${item.name}</h3>
     <small class="card-email">Author Email: ${item.email}</small>
     <p class="card-body">${item.body}</p>
