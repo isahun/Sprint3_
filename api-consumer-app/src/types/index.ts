@@ -1,11 +1,8 @@
-// El motlle per als Posts
 export interface Post {
   id: number;
   title: string;
   body: string;
 }
-
-// El motlle per als Usuaris (fixa't que company és un objecte a dins d'un altre)
 export interface User {
   id: number;
   name: string;
@@ -14,8 +11,6 @@ export interface User {
     name: string;
   };
 }
-
-// El motlle per als Comentaris
 export interface Comment {
   id: number;
   postId: number;
@@ -24,5 +19,5 @@ export interface Comment {
   body: string;
 }
 
-// Creem un "Super Tipus" que pot ser qualsevol dels tres
+//type that allows either of the three types above
 export type ApiItem = Post | User | Comment;
