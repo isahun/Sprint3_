@@ -1,6 +1,6 @@
 "use strict";
 
-import "./style.css";
+import "./styles/style.css";
 import { API_BASE_URL, FETCH_METHODS, ITEMS_PER_PAGE } from "./constants/config";
 import { MESSAGES } from "./constants/messages";
 import { cacheService } from "./services/cacheService";
