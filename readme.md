@@ -44,7 +44,6 @@ Pagination metadata is safely extracted from the `X-Total-Count` response header
 
 The codebase is organized following a highly scalable modular structure:
 
-```text
 api-consumer-app/
 │
 ├── index.html
@@ -81,7 +80,7 @@ api-consumer-app/
     │
     └── main.ts             # Application Orchestrator / Entry point
 
-    ## 🧠 Architecture Overview
+## 🧠 Architecture Overview
 
 ### 1️⃣ UI & Components Layer (`src/components/`)
 - Strictly typed DOM manipulation.
