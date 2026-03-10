@@ -3,49 +3,14 @@
 import { default as axios } from "axios";
 import "./style.css";
 
-// ============================================================================
-// 1. CONFIG & CONSTANTS
-// ============================================================================
 
-const API_BASE_URL = "https://jsonplaceholder.typicode.com";
-const ITEMS_PER_PAGE = 10;
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 mins in milliseconds
-const MAX_RETRIES = 3;
-const BASE_DELAY_MS = 500;
-const MAX_VISIBLE_PAGES = 5;
 
-// FIX: "Primitive Obsession". Instead of literal string comparison, ("posts" === "posts"), we use an object simulating an "Enum" (fix values enumeration)
-const API_TYPES = {
-  POSTS: "posts",
-  USERS: "users",
-  COMMENTS: "comments",
-};
-
-const FETCH_METHODS = {
-  FETCH: "fetch",
-  AXIOS: "axios",
-};
-
-const MESSAGES = {
-  NO_ITEMS: "No results found.",
-  NO_INTERNET: "No internet connection.",
-  UNEXPECTED_ERROR: "An unexpected error occurred. Please try again.",
-  SERVER_ERROR: "Server error. Please try again.",
-  BAD_REQUEST: "400 Bad Request: The request is invalid.",
-  NOT_FOUND: "404 Not Found: The requested resource does not exist.",
-  BTN_PREV: "Previous",
-  BTN_NEXT: "Next",
-  PAGE_ARIA: "Go to page",
-  LOADING: "Loading...",
-};
-
-// ============================================================================
+// ===========================================
 // 2. APP STATE
-// ============================================================================
+// ============================================
 
 let currentPage = 1;
 let currentController = null;
-const cache = new Map(); //Map -->an object that can store collections of key-value pairs
 
 // ============================================================================
 // 3. DOM ELEMENTS
@@ -363,82 +328,10 @@ function handleApiError(error) {
   }
 }
 
-//FETCH + RETRY
-async function fetchWithRetry(
-  url,
-  options,
-  retries = MAX_RETRIES,
-  baseDelay = BASE_DELAY_MS,
-) {
-  for (let attempt = 0; attempt <= retries; attempt++) {
-    try {
-      const response = await fetch(url, options);
-      if (!response.ok) throw new Error(getHTTPErrorMessage(response.status));
-      return response;
-    } catch (error) {
-      //No retry if manual abort
-      if (error.name === "AbortError") throw error;
-      //no retry, 404 errs already handled
-      if (error.message?.startsWith("400") || error.message?.startsWith("404"))
-        throw error;
-      //if last attempt --> throw error
-      if (attempt === retries) throw error;
-
-      //exponential backoff
-      const delay = baseDelay * 2 ** attempt;
-      const finalDelay = Math.random() * delay;
-      await sleep(finalDelay);
-    }
-  }
-}
-
-//AXIOS + RETRY
-async function axiosWithRetry(
-  url,
-  config,
-  retries = MAX_RETRIES,
-  baseDelay = BASE_DELAY_MS,
-) {
-  for (let attempt = 0; attempt <= retries; attempt++) {
-    try {
-      return await axios.get(url, config);
-    } catch (error) {
-      //No retry if manual abort
-      if (error.name === "CanceledError") throw error;
-      //no retry, 404 errs already handled
-      const status = error.response?.status;
-      //check both if status exists & < 500
-      if (status && status < 500) throw error;
-      //if last attempt --> throw error
-      if (attempt === retries) throw error;
-
-      //exponential backoff
-      const delay = baseDelay * 2 ** attempt;
-      const finalDelay = Math.random() * delay;
-
-      await sleep(finalDelay);
-    }
-  }
-}
-
-// ===================================================================
-// 9. UTILS
-// ===================================================================
-
-//Get HTTP status
-function getHTTPErrorMessage(status) {
-  if (status === 400) return MESSAGES.BAD_REQUEST;
-  if (status === 404) return MESSAGES.NOT_FOUND;
-  if (status >= 500) return MESSAGES.SERVER_ERROR;
-  return `HTTP Error ${status}`;
-}
 
 //Generate Cache Key
 function generateCacheKey(method, url, searchTerm, page) {
   return `${method}|${url}|${searchTerm}|${page}`; //what makes each call unique
 }
 
-//Retry helper
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+
