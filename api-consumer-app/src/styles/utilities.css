@@ -1,0 +1,36 @@
+/* ==========================================================================
+   STATES & UTILITIES
+   ========================================================================== */
+
+.hidden {
+    display: none !important;
+}
+
+#loading {
+    margin-bottom: var(--space-xl);
+    font-weight: 600;
+    color: var(--secondary-dark);
+    filter: drop-shadow(0 0 5px var(--secondary-light));
+}
+
+#error {
+    color: var(--error-color);
+    margin-bottom: var(--space-md);
+    font-weight: bold;
+}
+
+/* Accessibilitat: Skip Link */
+.skip-link {
+    position: absolute; 
+    top: -100px; 
+    left: 0; 
+    background: var(--secondary-color); 
+    color: var(--white); 
+    padding: var(--space-sm) var(--space-md); 
+    z-index: 100; 
+    transition: top 0.3s ease;
+}
+
+.skip-link:focus { 
+    top: 0; 
+}
