@@ -6,17 +6,19 @@ import { getHTTPErrorMessage, sleep } from "../utils/errorHandlers.js"
 
 //FETCH + RETRY
 export async function fetchWithRetry(
-  url,
-  options,
-  retries = MAX_RETRIES,
-  baseDelay = BASE_DELAY_MS,
-) {
+  url: string,
+  options?: RequestInit,
+  retries: number = MAX_RETRIES,
+  baseDelay: number = BASE_DELAY_MS,
+): Promise<Response> {
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
       const response = await fetch(url, options);
       if (!response.ok) throw new Error(getHTTPErrorMessage(response.status));
       return response;
-    } catch (error) {
+    } catch (err) {
+    const error = err as Error; //tell TS error is native typed
+    
       //No retry if manual abort
       if (error.name === "AbortError") throw error;
       //no retry, 404 errs already handled
@@ -31,4 +33,5 @@ export async function fetchWithRetry(
       await sleep(finalDelay);
     }
   }
-}
+  throw new Error("Max retries reached"); //so TS knows there's sth to return
+};
