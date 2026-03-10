@@ -27,5 +27,6 @@ export const cacheService = {
     //4. KEY GENERATOR
     generateKey: (method, url, searchTerm, page) => {
         return `${method}|${url}|${searchTerm}|${page}`;
+        //what makes each call unique
     }
 };
