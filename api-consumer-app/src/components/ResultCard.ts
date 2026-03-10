@@ -1,19 +1,20 @@
-import { API_TYPES } from "../constants/config.js"
+import { API_TYPES } from "../constants/config"
+import { Post, User, Comment, ApiItem } from "../types/index"
 
 //Fix "feature envy" and "switch statements" using DICTIONARY (Strategy Pattern for rendering). Instead of multiple ifs, app goes to dictionary, seeks right recipe (selected type), and applies saved pattern to paint each option
-const renderStrategies = {
-    [API_TYPES.POSTS]: (item) => `
+const renderStrategies: Record<string, (item: any) => string> = {
+    [API_TYPES.POSTS]: (item: Post) => `
     <small class="card-ID">Post ID: ${item.id} </small>
     <h3 class="card-title">${item.title}</h3>
     <p class="card-body">${item.body}</p>
     `,
-    [API_TYPES.USERS]: (item) => `
+    [API_TYPES.USERS]: (item: User) => `
     <small class="card-ID">User ID: ${item.id}</small>
     <h3 class="card-title">${item.name}</h3>
     <p class="card-email">${item.email}</p>
     <p class="card-company">Company: ${item.company.name}</p>
     `,
-    [API_TYPES.COMMENTS]: (item) => `
+    [API_TYPES.COMMENTS]: (item: Comment) => `
     <small class="card-ID">ID: ${item.id}</small>
     <h3 class="card-title">${item.name}</h3>
     <small class="card-email">Author Email: ${item.email}</small>
@@ -23,7 +24,7 @@ const renderStrategies = {
   };
 
 
-export function createCardElement (item, selectedType) {
+export function createCardElement (item: ApiItem, selectedType: string) {
 
     //1. Create empty div
     const card = document.createElement("div");
