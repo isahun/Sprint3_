@@ -9,30 +9,30 @@ import { fetchWithRetry } from "./api/fetchClient"
 import { axiosWithRetry } from "./api/axiosClient";
 import { createCardElement } from "./components/ResultCard";
 import { setupPagination } from "./components/Pagination";
-
+import { ApiItem } from "./types";
 
 // ===========================================
-// 2. APP STATE
+// 1. APP STATE
 // ============================================
 
-let currentPage = 1;
-let currentController = null;
+let currentPage: number = 1;
+let currentController: AbortController | null = null;
 
 // ==================================================
-// 3. DOM ELEMENTS
+// 2. DOM ELEMENTS
 // ==================================================
 
-const fetchMethodSelect = document.getElementById("fetch-method");
-const apiTypeSelect = document.getElementById("api-type");
-const searchInput = document.getElementById("search-input");
-const fetchButton = document.getElementById("fetch-btn");
-const loadingContainer = document.getElementById("loading");
-const errorContainer = document.getElementById("error");
-const resultsContainer = document.getElementById("results");
-const paginationContainer = document.getElementById("pagination");
+const fetchMethodSelect = document.getElementById("fetch-method") as HTMLSelectElement;
+const apiTypeSelect = document.getElementById("api-type") as HTMLSelectElement;
+const searchInput = document.getElementById("search-input") as HTMLInputElement;
+const fetchButton = document.getElementById("fetch-btn") as HTMLButtonElement;
+const loadingContainer = document.getElementById("loading") as HTMLDivElement;
+const errorContainer = document.getElementById("error") as HTMLDivElement;
+const resultsContainer = document.getElementById("results") as HTMLDivElement;
+const paginationContainer = document.getElementById("pagination") as HTMLDivElement;
 
 // ===================================================
-// 4. EVENT LISTENERS
+// 3. EVENT LISTENERS
 //====================================================
 
 fetchButton.addEventListener("click", () => {
@@ -45,7 +45,7 @@ apiTypeSelect.addEventListener("change", () => {
 });
 
 // ==================================================
-// 5. UI HELPERS
+// 4. UI HELPERS
 // ===================================================
 
 function showLoading() {
@@ -59,7 +59,7 @@ function hideLoading() {
   resultsContainer.setAttribute("aria-busy", "false"); //finished working
 }
 
-function showError(errorMessage) {
+function showError(errorMessage:string) {
   errorContainer.textContent = errorMessage;
   errorContainer.classList.remove("hidden");
 }
@@ -70,7 +70,7 @@ function hideError() {
 }
 
 // ====================================================
-// 6. MAIN CONTROLLER
+// 5. MAIN CONTROLLER
 //====================================================
 //FIX: inappropriate incimacy and responsibility overload
 //fetchData used to decide if axios or fetch and configure params,
@@ -102,11 +102,11 @@ async function fetchData() {
 }
 
 // ===================================================
-// 7. API ORCHESTRATOR
+// 6. API ORCHESTRATOR
 // ===================================================
 // Fix according to DRY, this function replaces getDataWithAxios and getDataWith Fetch: check cache, AbortController and send results to screen
 
-async function performApiRequest(endpointURL, searchTerm, selectedType, useAxios) {
+async function performApiRequest(endpointURL: string, searchTerm: string, selectedType: string, useAxios:boolean) {
     const methodStr = useAxios ? FETCH_METHODS.AXIOS : FETCH_METHODS.FETCH;
 
     //use cache service
@@ -160,8 +160,9 @@ async function performApiRequest(endpointURL, searchTerm, selectedType, useAxios
     }
 }
 
-//Fix, error centralization to avoid repeating code in every try/catch
-function handleApiError(error) {
+//error centralization to avoid repeating code in every try/catch
+function handleApiError(err: unknown):void {
+  const error = err as { name?:string; message?:string; response?: { status: number } };
   if (error.name === "AbortError" || error.name === "CanceledError") return;
 
   if (!navigator.onLine) {
@@ -176,11 +177,11 @@ function handleApiError(error) {
 }
 
 // ===================================================
-// 8. RENDERING LAYER
+// 7. RENDERING LAYER
 // ===================================================
 
 //Display results, receives an object as param, easier to handle in the future
-function displayResults({ items, totalItems, selectedType }) {
+function displayResults({ items, totalItems, selectedType }: { items: ApiItem[], totalItems: number, selectedType: string}): void {
   resultsContainer.innerHTML = "";
 
   if (items.length === 0) {
