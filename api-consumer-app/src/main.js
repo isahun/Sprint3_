@@ -1,498 +1,444 @@
-"use strict"
+"use strict";
 
 import { default as axios } from "axios";
-import "./style.css"
+import "./style.css";
 
-//----CONFIG CONSTANTS----//
-const BASE_URL = "https://jsonplaceholder.typicode.com" //For bonus task: remove "/posts" at the end to leave baseURL & access other JSONPlaceholder APIs
+// ============================================================================
+// 1. CONFIG & CONSTANTS
+// ============================================================================
+
+const API_BASE_URL = "https://jsonplaceholder.typicode.com";
+const ITEMS_PER_PAGE = 10;
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 mins in milliseconds
+const MAX_RETRIES = 3;
+const BASE_DELAY_MS = 500;
+const MAX_VISIBLE_PAGES = 5;
+
+// FIX: "Primitive Obsession". Instead of literal string comparison, ("posts" === "posts"), we use an object simulating an "Enum" (fix values enumeration)
+const API_TYPES = {
+  POSTS: "posts",
+  USERS: "users",
+  COMMENTS: "comments",
+};
+
+const FETCH_METHODS = {
+  FETCH: "fetch",
+  AXIOS: "axios",
+};
+
+const MESSAGES = {
+  NO_ITEMS: "No results found.",
+  NO_INTERNET: "No internet connection.",
+  UNEXPECTED_ERROR: "An unexpected error occurred. Please try again.",
+  SERVER_ERROR: "Server error. Please try again.",
+  BAD_REQUEST: "400 Bad Request: The request is invalid.",
+  NOT_FOUND: "404 Not Found: The requested resource does not exist.",
+  BTN_PREV: "Previous",
+  BTN_NEXT: "Next",
+  PAGE_ARIA: "Go to page",
+  LOADING: "Loading...",
+};
+
+// ============================================================================
+// 2. APP STATE
+// ============================================================================
+
 let currentPage = 1;
-const itemsPerPage = 10;
-
+let currentController = null;
 const cache = new Map(); //Map -->an object that can store collections of key-value pairs
-const CACHE_TTL = 5 * 60 * 1000; //5 mins
 
-//----DOM elements refs----//
-const apiSelector = document.getElementById("fetch-method");
+// ============================================================================
+// 3. DOM ELEMENTS
+// ============================================================================
+
+const fetchMethodSelect = document.getElementById("fetch-method");
+const apiTypeSelect = document.getElementById("api-type");
 const searchInput = document.getElementById("search-input");
 const fetchButton = document.getElementById("fetch-btn");
-const loadingElement = document.getElementById("loading");
-const errorElement = document.getElementById("error");
+const loadingContainer = document.getElementById("loading");
+const errorContainer = document.getElementById("error");
 const resultsContainer = document.getElementById("results");
 const paginationContainer = document.getElementById("pagination");
-const apiTypeSelector = document.getElementById("api-type");
 
-const noItemsMsg = "No s'han trobat resultats";
+// ============================================================================
+// 4. EVENT LISTENER
+// ============================================================================
 
-let currentController = null;
-
-
-//----EVENT LISTENER----//
 fetchButton.addEventListener("click", () => {
-    currentPage = 1; //back to page one when user makes new petition
-    fetchData();
+  currentPage = 1; //back to page one when user makes new petition
+  fetchData();
 });
 
-apiTypeSelector.addEventListener("change", () => {
-    currentPage = 1;
+apiTypeSelect.addEventListener("change", () => {
+  currentPage = 1;
 });
 
-//----UI HELPERS----//
+// ============================================================================
+// 5. UI HELPERS
+// ============================================================================
 
-//Show loading element
 function showLoading() {
-    loadingElement.classList.remove("hidden");
-    resultsContainer.setAttribute("aria-busy", "true"); //let user know it's working
+  loadingContainer.textContent = MESSAGES.LOADING;
+  loadingContainer.classList.remove("hidden");
+  resultsContainer.setAttribute("aria-busy", "true"); //let user know it's working
 }
 
-//Hide loading element
 function hideLoading() {
-    loadingElement.classList.add("hidden");
-    resultsContainer.setAttribute("aria-busy", "false"); //finished working
+  loadingContainer.classList.add("hidden");
+  resultsContainer.setAttribute("aria-busy", "false"); //finished working
 }
 
-//Show error message
-function showError(error) {
-    errorElement.textContent = error;
-    errorElement.classList.remove("hidden");
+function showError(errorMessage) {
+  errorContainer.textContent = errorMessage;
+  errorContainer.classList.remove("hidden");
 }
 
-//Hide error message
 function hideError() {
-    errorElement.textContent = "";
-    errorElement.classList.add("hidden");
+  errorContainer.textContent = "";
+  errorContainer.classList.add("hidden");
 }
 
-//----MAIN CONTROLLER----/
+// ============================================================================
+// 6. MAIN CONTROLLER
+// ============================================================================
+//FIX: inappropriate incimacy and responsibility overload
+//fetchData used to decide if axios or fetch and configure params,
+// now it only reads DOM (users inputs) and calls performApiRequest
+
 async function fetchData() {
-    const searchTerm = searchInput.value.trim();
-    const useAxios = apiSelector.value === "axios";
+  const searchTerm = searchInput.value.trim();
 
-    let selectedType = apiTypeSelector.value;
+  const useAxios = fetchMethodSelect.value === FETCH_METHODS.AXIOS;
+  let selectedType = apiTypeSelect.value;
 
-    const endpointURL = `${BASE_URL}/${selectedType}`;
+  const endpointURL = `${API_BASE_URL}/${selectedType}`;
 
-    //UI state (to implement)
-    showLoading();
-    hideError();
+  //UI state (to implement)
+  showLoading();
+  hideError();
 
-    //Clear previous content
-    resultsContainer.innerHTML = "";
-    paginationContainer.innerHTML = "";
+  //Clear previous content
+  resultsContainer.innerHTML = "";
+  paginationContainer.innerHTML = "";
 
-    try {
-        if (useAxios) {
-            //call axios implementation
-            await fetchDataWithAxios(endpointURL, searchTerm, selectedType);
-        } else{
-            //call fetch implementation
-            await fetchDataWithFetch(endpointURL, searchTerm, selectedType);
-        }
-    } catch (error) {
-        //handle unexpected errors
-        showError("S'ha produït un error inesperat. Torna-ho a intentar.")
-    } finally {
-        hideLoading();
-    }
+  try {
+    //call axios implementation without fetchData knowing HOW the call is made
+    await performApiRequest(endpointURL, searchTerm, selectedType, useAxios);
+  } catch (error) {
+    //handle unexpected errors
+    showError(MESSAGES.UNEXPECTED_ERROR);
+  } finally {
+    hideLoading();
+  }
 }
 
-//----RENDERING LAYER----//
+// ============================================================================
+// 7. RENDERING LAYER
+// ============================================================================
 
-//Display results
-function displayResults(items, totalItems, selectedType) {
-    resultsContainer.innerHTML = "";
+//Display results, receives an object as param, easier to handle in the future
+function displayResults({ items, totalItems, selectedType }) {
+  resultsContainer.innerHTML = "";
 
-    if (items.length === 0) {
-        resultsContainer.innerText = noItemsMsg;
-        return;
-    } 
+  if (items.length === 0) {
+    resultsContainer.innerText = MESSAGES.NO_ITEMS;
+    return;
+  }
 
-    items.forEach((item) => {
-        const card = document.createElement("div");
-        card.classList.add("card");
+  //Fix "feature envy" and "switch statements" using DICTIONARY (Strategy Pattern for rendering). Instead of multiple ifs, app goes to dictionary, seeks right recipe (selected type), and applies saved pattern to paint each option
+  const renderStrategies = {
+    [API_TYPES.POSTS]: (item) => `
+    <small class="card-ID">Post ID: ${item.id} </small>
+    <h3 class="card-title">${item.title}</h3>
+    <p class="card-body">${item.body}</p>
+    `,
+    [API_TYPES.USERS]: (item) => `
+    <small class="card-ID">User ID: ${item.id}</small>
+    <h3 class="card-title">${item.name}</h3>
+    <p class="card-email">${item.email}</p>
+    <p class="card-company">Company: ${item.company.name}</p>
+    `,
+    [API_TYPES.COMMENTS]: (item) => `
+    <small class="card-ID">ID: ${item.id}</small>
+    <h3 class="card-title">${item.name}</h3>
+    <small class="card-email">Author Email: ${item.email}</small>
+    <p class="card-body">${item.body}</p>
+    <small class="card-ID">Related Post ID: ${item.postId}</small>
+    `,
+  };
 
-        if(selectedType === "posts") {
-            renderPost(card, item);
-        } else if (selectedType === "users") {
-            renderUser(card, item);
-        } else if (selectedType === "comments") {
-            renderComment(card, item);
-        }
+  items.forEach((item) => {
+    const card = document.createElement("div");
+    card.classList.add("card");
 
-        resultsContainer.appendChild(card);
-        
-    });
+    //find and execute proper strategy matching selectedType (paint users, comments or posts)
+    const renderContent = renderStrategies[selectedType];
 
-    setupPagination(totalItems);
+    if (renderContent) {
+      //we execute strategy passing item as param, without knowing its exact properties
+      card.innerHTML = renderContent(item);
+    }
+
+    resultsContainer.appendChild(card);
+  });
+
+  setupPagination(totalItems);
 }
 
 //Pagination
 function setupPagination(totalItems) {
-    paginationContainer.innerHTML = "";
+  paginationContainer.innerHTML = "";
 
-    const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
 
-    if (totalPages <= 1) {
-        paginationContainer.style.display = "none";
-        return;
-    }
+  if (totalPages <= 1) {
+    paginationContainer.style.display = "none";
+    return;
+  }
 
-    paginationContainer.style.display = "flex";
+  paginationContainer.style.display = "flex";
+  const { startPage, endPage } = calcStartEndPage(currentPage, totalPages);
 
-    const { startPage, endPage } = calcStartEndPage(currentPage, totalPages);
+  //Unify pagination buttons in 1 function to fix duplicate logic
+  if (currentPage > 1) {
+    createPaginationButton(
+      MESSAGES.BTN_PREV,
+      currentPage - 1,
+      "pagination-btn",
+    );
+  }
 
-    renderPrevBtn();
-    renderNumBtn(startPage, endPage);
-    renderNextBtn(totalPages);
+  for (let i = startPage; i <= endPage; i++) {
+    createPaginationButton(
+      i.toString(),
+      i,
+      "pagination-active",
+      i === currentPage,
+    );
+  }
+
+  if (currentPage < totalPages) {
+    createPaginationButton(
+      MESSAGES.BTN_NEXT,
+      currentPage + 1,
+      "pagination-btn",
+    );
+  }
 }
 
-//----API LAYER----//
+function createPaginationButton(
+  text,
+  targetPage,
+  className,
+  isDisabled = false,
+) {
+  const button = document.createElement("button");
+  button.classList.add(className);
+  button.textContent = text;
+  button.disabled = isDisabled;
+  button.ariaLabel =
+    typeof text === "number" || !isNaN(text)
+      ? `${MESSAGES.PAGE_ARIA} ${text}`
+      : text;
 
-//RETRY helpers - Fetch
-async function fetchWithRetry(url, options, retries = 3, baseDelay = 500) {
-    for (let attempt= 0; attempt <= retries; attempt++) {
-        try {
-            const response = await fetch(url, options);
+  button.addEventListener("click", () => {
+    currentPage = targetPage;
+    fetchData();
+  });
 
-            if(!response.ok) {
-                throw new Error(getHTTPErrorMessage(response.status))
-            }
-            return response;
-        } catch(error) {
-            //No retry if manual abort
-            if(error.name === "AbortError") {
-                throw error;
-            }
-
-            //no retry, 404 errs already handled
-            if (error.message?.startsWith("400") || error.message?.startsWith("404")){ 
-                throw error;
-            }
-
-            //if last attempt --> throw error
-            if(attempt === retries) {
-                throw error;
-            }
-            //exponential backoff
-            const delay = baseDelay * 2 ** attempt;
-            const finalDelay = Math.random() * delay;
-            await sleep(finalDelay);
-        }
-    }
+  paginationContainer.appendChild(button);
 }
-
-//Retry helpers - AXIOS
-async function axiosWithRetry(url, config, retries = 3, baseDelay = 500) {
-    for (let attempt= 0; attempt <= retries; attempt++) {
-        try {
-            return await axios.get(url, config);
-
-        } catch(error) {
-            //No retry if manual abort
-            if(error.name === "CanceledError") throw error;
-            
-            //no retry, 404 errs already handled
-            const status = error.response?.status;
-
-            //check both if status exists & < 500
-            if (status && status < 500) throw error;
-
-            //if last attempt --> throw error
-            if(attempt === retries) throw error;
-
-            //exponential backoff
-            const delay = baseDelay * 2 ** attempt;
-            const finalDelay = Math.random() * delay;
-            
-            await sleep(finalDelay);
-        }
-    }
-}
-
-//Get data with fetch
-async function fetchDataWithFetch(endpointURL, searchTerm, selectedType) {
-    const cacheKey = generateCacheKey("fetch", endpointURL, searchTerm, currentPage);
-    const cachedEntry = cache.get(cacheKey);
-
-    if (cachedEntry) {
-        const isExpired = Date.now() - cachedEntry.timestamp > CACHE_TTL;
-        if (!isExpired) {
-            displayResults(cachedEntry.data, cachedEntry.totalItems, cachedEntry.selectedType);
-            return;
-        } 
-        
-        cache.delete(cacheKey);
-    }
-
-    if(currentController){
-        currentController.abort();
-    };
-
-    currentController = new AbortController();
-
-    try {
-        const response = await fetchWithRetry(`${endpointURL}?_page=${currentPage}&_limit=${itemsPerPage}&q=${searchTerm}`, {
-            signal: currentController.signal
-        });
-        
-        const totalItems = Number(response.headers.get("X-Total-Count"));
-        const data = await response.json();
-
-        cache.set(cacheKey, {
-            data,
-            totalItems,
-            selectedType,
-            timestamp: Date.now()
-        });
-
-        displayResults(data, totalItems, selectedType);
-        
-        currentController = null;
-
-    } catch(error){
-        if (error.name === "AbortError") {
-            return; //When cancelling, fetch delivers "abort error", which we don't need since it's a voluntary cancellation, not an error
-        }
-
-        if (!navigator.onLine) {
-            showError("No tens connexió a internet.")
-        } else {
-        showError(error.message);
-        }
-        return;
-    }
-};
-
-//Get data with axios
-async function fetchDataWithAxios(endpointURL, searchTerm, selectedType) {
-    const cacheKey = generateCacheKey("axios", endpointURL, searchTerm, currentPage);
-    const cachedEntry = cache.get(cacheKey);
-
-    if (cachedEntry) { // check if a cached response exists for this request
-        const isExpired = Date.now() - cachedEntry.timestamp > CACHE_TTL;
-
-        if (!isExpired) {
-            displayResults(cachedEntry.data, cachedEntry.totalItems, cachedEntry.selectedType);
-            return;
-        } 
-        
-        cache.delete(cacheKey);
-    }
-    //No valid cache hit → proceed with network request
-    
-    if(currentController){
-        currentController.abort();
-    }
-
-    currentController = new AbortController();
-
-    try {
-        const response = await axiosWithRetry(endpointURL, {
-        params: {
-            _page: currentPage,
-            _limit: itemsPerPage,
-            q: searchTerm
-        },
-        signal: currentController.signal
-    });
-
-    const totalItems = Number(response.headers["x-total-count"]);
-    const data = response.data;
-
-    cache.set(cacheKey, {
-            data,
-            totalItems,
-            selectedType,
-            timestamp: Date.now()
-        });
-
-    displayResults(data, totalItems, selectedType);
-
-    currentController = null;
-
-} catch (error) {
-        if (error.name === "CanceledError") {
-                return; //When cancelling, axios delivers "canceled error"
-            };
-
-        if(!navigator.onLine){
-            showError("No tens connexió a internet.")
-        } else if (error.response) {
-            showError(getHTTPErrorMessage(error.response.status));
-        } else {
-            showError(error.message);
-        }
-        return;
-    }
-};
-
-//----UTILS----//
-
-//Get HTTP status
-function getHTTPErrorMessage(status){
-    if(status === 400) {
-        return "400 Bad Request: La sol·licitud no és vàlida."
-    }
-    if(status === 404) {
-        return "404 Not Found: El recurs sol·licitat no existeix."
-    }
-    if(status >= 500) {
-        return "Error del servidor. Torna-ho a intentar."
-    }
-
-    return `Error HTTP ${status}`
-};
-
-//Generate Cache Key
-function generateCacheKey(method, url, searchTerm, page) {
-    return `${method}|${url}|${searchTerm}|${page}`;//what makes each call unique
-};
-
-//Render posts, users and comments
-function renderPost(card, item) {
-    const itemID = document.createElement("small");
-    itemID.classList.add("card-ID");
-    itemID.textContent = `ID del post: ${item.id}`;
-
-    const itemTitle = document.createElement("h3");
-    itemTitle.classList.add("card-title")
-    itemTitle.textContent = item.title;
-
-    const itemBody = document.createElement("p");
-    itemBody.classList.add("card-body");
-    itemBody.textContent = item.body;
-
-    card.appendChild(itemID);
-    card.appendChild(itemTitle);
-    card.appendChild(itemBody);
-    };
-
-function renderUser (card, item) {
-    const itemID = document.createElement("small");
-    itemID.classList.add("card-ID");
-    itemID.textContent = `ID de l'usuari: ${item.id}`;
-
-    const itemName = document.createElement("h3");
-    itemName.classList.add("card-title")
-    itemName.textContent = item.name;
-
-    const email = document.createElement("p");
-    itemName.classList.add("card-email");
-    email.textContent = item.email;
-
-    const companyName = document.createElement("p");
-    companyName.classList.add("card-company")
-    companyName.textContent = `Empresa: ${item.company.name}`;
-
-    card.appendChild(itemID);
-    card.appendChild(itemName);
-    card.appendChild(email);
-    card.appendChild(companyName);
-};
-
-function renderComment (card, item) {
-    const itemID = document.createElement("small");
-    itemID.classList.add("card-ID");
-    itemID.textContent = `ID: ${item.id}`;
-
-    const itemName = document.createElement("h3");
-    itemName.classList.add("card-title")
-    itemName.textContent = item.name;
-
-    const email = document.createElement("small");
-    itemName.classList.add("card-email");
-    email.textContent = `Email de l'autor: ${item.email}`;
-
-    const itemBody = document.createElement("p");
-    itemBody.classList.add("card-body");
-    itemBody.textContent = item.body;
-
-    const postId = document.createElement("small");
-    postId.classList.add("card-ID");
-    postId.textContent = `ID del post relacionat: ${item.postId}`;
-
-    card.appendChild(itemID);
-    card.appendChild(itemName);
-    card.appendChild(email);
-    card.appendChild(itemBody);
-    card.appendChild(postId);
-};
 
 //Pagination Util: Calc start page and end page to create btns
 function calcStartEndPage(currentPage, totalPages) {
-    const maxVisible = 5;
-    const half = Math.floor(maxVisible / 2); //2 pages at each side of the current
+  const half = Math.floor(MAX_VISIBLE_PAGES / 2); //2 pages at each side of the current
 
-    let startPage = currentPage - half;
-    let endPage = currentPage + half;
+  let startPage = currentPage - half;
+  let endPage = currentPage + half;
 
-    if (startPage < 1) {
-        startPage = 1;
-        endPage = Math.min(totalPages, maxVisible);
-    }
+  if (startPage < 1) {
+    startPage = 1;
+    endPage = Math.min(totalPages, MAX_VISIBLE_PAGES);
+  }
 
-    if (endPage > totalPages) {
-        endPage = totalPages;
-        startPage = Math.max(1, totalPages - maxVisible + 1);
-    }
+  if (endPage > totalPages) {
+    endPage = totalPages;
+    startPage = Math.max(1, totalPages - MAX_VISIBLE_PAGES + 1);
+  }
 
-    return {startPage, endPage}
+  return { startPage, endPage };
 }
 
-function renderPrevBtn() {
-    if(currentPage <= 1) return;
+//=====================================================================
+// 8. API LAYER
+//=====================================================================
+// Fix according to DRY, this function replaces getDataWithAxios and getDataWith Fetch: check cache, AbortController and send results to screen
+async function performApiRequest(
+  endpointURL,
+  searchTerm,
+  selectedType,
+  useAxios,
+) {
+  const methodStr = useAxios ? FETCH_METHODS.AXIOS : FETCH_METHODS.FETCH;
+  const cacheKey = generateCacheKey(
+    methodStr,
+    endpointURL,
+    searchTerm,
+    currentPage,
+  );
+  const cachedEntry = cache.get(cacheKey);
 
-    const prevBtn = document.createElement("button");
-    prevBtn.classList.add("pagination-btn");
-    prevBtn.textContent = "Anterior";
-    prevBtn.ariaLabel = "Anar a la pàgina anterior"
+  //1. Check cache: check if a cached response exists for this request
+  if (cachedEntry) {
+    const isExpired = Date.now() - cachedEntry.timestamp > CACHE_TTL_MS;
+    if (!isExpired) {
+      displayResults({
+        items: cachedEntry.data,
+        totalItems: cachedEntry.totalItems,
+        selectedType: cachedEntry.selectedType,
+      });
+      return;
+    }
+    cache.delete(cacheKey); //clear expired cache
+  }
 
-    prevBtn.addEventListener("click", () => {
-        currentPage--;
-        fetchData();
+  //If no valid cache hit → abort prev req → proceed with network request
+
+  //2. Abort previous requests
+  if (currentController) {
+    currentController.abort();
+  }
+
+  currentController = new AbortController();
+
+  //3. Perform network request
+  try {
+    let data, totalItems;
+    //delegate decision on which library to use
+    if (useAxios) {
+      const response = await axiosWithRetry(endpointURL, {
+        params: { _page: currentPage, _limit: ITEMS_PER_PAGE, q: searchTerm },
+        signal: currentController.signal,
+      });
+      totalItems = Number(response.headers["x-total-count"]);
+      data = response.data;
+    } else {
+      const response = await fetchWithRetry(
+        `${endpointURL}?_page=${currentPage}&_limit=${ITEMS_PER_PAGE}&q=${searchTerm}`,
+        {
+          signal: currentController.signal,
+        },
+      );
+      totalItems = Number(response.headers.get("X-Total-Count"));
+      data = await response.json();
+    }
+
+    //4. Save to Cache & Display
+    cache.set(cacheKey, {
+      data,
+      totalItems,
+      selectedType,
+      timestamp: Date.now(),
     });
-
-    paginationContainer.appendChild(prevBtn);
-};
-
-function renderNumBtn(startPage, endPage) {
-    for(let i = startPage; i <= endPage; i++) {
-    
-        const button = document.createElement("button");
-        button.classList.add("pagination-active");
-        button.textContent = `${i}`;
-        button.ariaLabel = `Pàgina ${i}`
-
-        if (i === currentPage) {
-            button.disabled = true;
-        }
-
-        button.addEventListener("click", () => {
-            currentPage = i;
-            fetchData();
-        });
-
-        paginationContainer.appendChild(button);
-    };
+    displayResults({ items: data, totalItems, selectedType });
+  } catch (error) {
+    handleApiError(error);
+  } finally {
+    currentController = null;
+  }
 }
 
-function renderNextBtn(totalPages) {
-    if(currentPage >= totalPages) return;
+//Fix, error centralization to avoid repeating code in every try/catch
+function handleApiError(error) {
+  if (error.name === "AbortError" || error.name === "CanceledError") return;
 
-    const nextBtn = document.createElement("button");
-    nextBtn.classList.add("pagination-btn");
-    nextBtn.textContent = "Següent";
-    nextBtn.ariaLabel = "Anar a la pàgina següent";
+  if (!navigator.onLine) {
+    showError(MESSAGES.NO_INTERNET);
+  } else if (error.response) {
+    //Axios error
+    showError(getHTTPErrorMessage(error.response.status));
+  } else {
+    //FETCH error or generic error
+    showError(error.message || MESSAGES.UNEXPECTED_ERROR);
+  }
+}
 
-    
-    nextBtn.addEventListener("click", () => {
-        currentPage++;
-        fetchData();
-    });
+//FETCH + RETRY
+async function fetchWithRetry(
+  url,
+  options,
+  retries = MAX_RETRIES,
+  baseDelay = BASE_DELAY_MS,
+) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const response = await fetch(url, options);
+      if (!response.ok) throw new Error(getHTTPErrorMessage(response.status));
+      return response;
+    } catch (error) {
+      //No retry if manual abort
+      if (error.name === "AbortError") throw error;
+      //no retry, 404 errs already handled
+      if (error.message?.startsWith("400") || error.message?.startsWith("404"))
+        throw error;
+      //if last attempt --> throw error
+      if (attempt === retries) throw error;
 
-    paginationContainer.appendChild(nextBtn);
+      //exponential backoff
+      const delay = baseDelay * 2 ** attempt;
+      const finalDelay = Math.random() * delay;
+      await sleep(finalDelay);
+    }
+  }
+}
+
+//AXIOS + RETRY
+async function axiosWithRetry(
+  url,
+  config,
+  retries = MAX_RETRIES,
+  baseDelay = BASE_DELAY_MS,
+) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      return await axios.get(url, config);
+    } catch (error) {
+      //No retry if manual abort
+      if (error.name === "CanceledError") throw error;
+      //no retry, 404 errs already handled
+      const status = error.response?.status;
+      //check both if status exists & < 500
+      if (status && status < 500) throw error;
+      //if last attempt --> throw error
+      if (attempt === retries) throw error;
+
+      //exponential backoff
+      const delay = baseDelay * 2 ** attempt;
+      const finalDelay = Math.random() * delay;
+
+      await sleep(finalDelay);
+    }
+  }
+}
+
+// ===================================================================
+// 9. UTILS
+// ===================================================================
+
+//Get HTTP status
+function getHTTPErrorMessage(status) {
+  if (status === 400) return MESSAGES.BAD_REQUEST;
+  if (status === 404) return MESSAGES.NOT_FOUND;
+  if (status >= 500) return MESSAGES.SERVER_ERROR;
+  return `HTTP Error ${status}`;
+}
+
+//Generate Cache Key
+function generateCacheKey(method, url, searchTerm, page) {
+  return `${method}|${url}|${searchTerm}|${page}`; //what makes each call unique
 }
 
 //Retry helper
-function sleep (ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
