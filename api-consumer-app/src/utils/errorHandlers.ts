@@ -1,18 +1,14 @@
 import { MESSAGES } from "../constants/messages";
 
-// ===================================================================
-// 9. UTILS
-// ===================================================================
-
 //Get HTTP status
-export function getHTTPErrorMessage(status) {
+export function getHTTPErrorMessage(status: number): string {
   if (status === 400) return MESSAGES.BAD_REQUEST;
   if (status === 404) return MESSAGES.NOT_FOUND;
   if (status >= 500) return MESSAGES.SERVER_ERROR;
-  return `HTTP Error ${status}`;
+  return MESSAGES.UNEXPECTED_ERROR;
 }
 
 //Retry helper
-export function sleep(ms) {
+export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }

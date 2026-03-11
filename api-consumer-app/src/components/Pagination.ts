@@ -2,7 +2,12 @@ import { ITEMS_PER_PAGE, MAX_VISIBLE_PAGES } from "../constants/config";
 import { MESSAGES } from "../constants/messages";
 
 //Pagination
-export function setupPagination(totalItems, currentPage, paginationContainer, onPageChange) {
+export function setupPagination(
+  totalItems: number,
+  currentPage: number,
+  paginationContainer: HTMLElement,
+  onPageChange: (newPage: number) => void
+): void {
   paginationContainer.innerHTML = "";
   const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
 
@@ -22,7 +27,7 @@ export function setupPagination(totalItems, currentPage, paginationContainer, on
       "pagination-btn",
       false,
       paginationContainer,
-      onPageChange
+      onPageChange,
     );
   }
 
@@ -33,7 +38,7 @@ export function setupPagination(totalItems, currentPage, paginationContainer, on
       "pagination-active",
       i === currentPage,
       paginationContainer,
-      onPageChange
+      onPageChange,
     );
   }
 
@@ -44,37 +49,39 @@ export function setupPagination(totalItems, currentPage, paginationContainer, on
       "pagination-btn",
       false,
       paginationContainer,
-      onPageChange
+      onPageChange,
     );
   }
 }
 
 function createPaginationButton(
-  text,
-  targetPage,
-  className,
-  isDisabled,
-  container,
-  onPageChange
-) {
+  text: string,
+  targetPage: number,
+  className: string,
+  isDisabled: boolean,
+  container: HTMLElement,
+  onPageChange: (newPage:number) => void
+): void {
   const button = document.createElement("button");
   button.classList.add(className);
   button.textContent = text;
   button.disabled = isDisabled;
-  button.ariaLabel =
-    typeof text === "number" || !isNaN(text)
-      ? `${MESSAGES.PAGE_ARIA} ${text}`
-      : text;
+
+  //minor ts fix: convert text to num to validate
+  button.ariaLabel = !isNaN(Number(text)) ? `${MESSAGES.PAGE_ARIA} ${text}` : text;
 
   button.addEventListener("click", () => {
     onPageChange(targetPage); //to let main.js know we need to change page
- });
+  });
 
   container.appendChild(button);
 }
 
 //Pagination Util: Calc start page and end page to create btns
-function calcStartEndPage(currentPage, totalPages) {
+function calcStartEndPage(
+  currentPage: number, 
+  totalPages: number
+): { startPage: number; endPage: number } {
   const half = Math.floor(MAX_VISIBLE_PAGES / 2); //2 pages at each side of the current
   let startPage = currentPage - half;
   let endPage = currentPage + half;
