@@ -135,6 +135,7 @@ The project highlights practical differences between the two clients:
 
 ---
 
-## 👩‍💻 Author
 
-Academic front-end practice project focused on robust API consumption patterns, clean client-side architecture, and the migration from monolithic JavaScript to scalable TypeScript.
+##### Irene V. Sahun - GitHub: isahun 
+
+##### Created as part of the IT Academy Frontend BootCamp.
